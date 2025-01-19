@@ -475,6 +475,7 @@ describe('http POST', () => {
           holdingRegisters: new Map<number, IReadRegisterResultOrError>(),
           analogInputs: new Map<number, IReadRegisterResultOrError>(),
           coils: new Map<number, IReadRegisterResultOrError>(),
+          discreteInputs: new Map<number, IReadRegisterResultOrError>(),
         }
         testdata.holdingRegisters.set(100, { error: new Error('failed!!!') })
         Bus.getBus(0)!['setModbusAddressesForSlave'](2, testdata)

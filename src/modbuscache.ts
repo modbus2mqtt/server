@@ -87,7 +87,8 @@ export class ImodbusAddresses {
 
 interface IModbusProcess {
   resultTable: Map<number, IReadRegisterResultOrError>
-  func: (slaveid: number, a: number, length: number) => Promise<ReadRegisterResultWithDuration>
+  readFunc: (slaveid: number, a: number, length: number) => Promise<ReadRegisterResultWithDuration>
+  writeFunc?: (slaveid: number, dataaddress: number, data: ReadRegisterResult) => Promise<void>
 }
 //
 // normal state/action flow
@@ -288,58 +289,45 @@ export class ModbusStateMachine {
       }
       let startAddress = this.preparedAddresses[this.preparedAddressesIndex].address
       let length = this.preparedAddresses[this.preparedAddressesIndex].length
-      let fc: number = this.preparedAddresses[this.preparedAddressesIndex].registerType
-      if (this.write) fc = M2mSpecification.getWriteFunctionCode(this.preparedAddresses[this.preparedAddressesIndex].registerType)
-      if (fc == undefined) {
-        debugData('processAction:' + 'No function code passed: ' + fc)
-        this.endProcessAction(this.processAction)
-        return
-      }
-
+      let registerType: number = this.preparedAddresses[this.preparedAddressesIndex].registerType
       let start = Date.now()
-      let msg =
-        '(' +
-        this.pid +
-        '):processAction: slaveid: ' +
-        this.slaveId.slaveid +
-        ' startaddr: ' +
-        startAddress +
-        ' l:' +
-        length +
-        ' FC:' +
-        fc
       let tbl = new Map<ModbusRegisterType, IModbusProcess>([
         [
           ModbusRegisterType.HoldingRegister,
           {
             resultTable: this.result.holdingRegisters,
-            func: bus.readHoldingRegisters,
+            readFunc: bus.readHoldingRegisters,
+            writeFunc: bus.writeHoldingRegisters,
           },
         ],
         [
           ModbusRegisterType.AnalogInputs,
           {
             resultTable: this.result.analogInputs,
-            func: bus.readInputRegisters,
+            readFunc: bus.readInputRegisters,
           },
         ],
-        [ModbusRegisterType.Coils, { resultTable: this.result.coils, func: bus.readDiscreteInputs }],
+        [
+          ModbusRegisterType.Coils,
+          {
+            resultTable: this.result.coils,
+            readFunc: bus.readCoils,
+            writeFunc: bus.writeCoils
+          }
+        ],
+        [
+          ModbusRegisterType.DiscreteInputs,
+          {
+            resultTable: this.result.discreteInputs,
+            readFunc: bus.readDiscreteInputs
+          }
+        ],
       ])
+
       if (this.write) {
-        bus
-          .writeHoldingRegisters(this.slaveId.slaveid, startAddress, this.data)
-          .then(() => {
-            this.preparedAddressesIndex++
-            this.next(ModbusStates.Result, this.closeAction)
-          })
-          .catch((e: any) => {
-            this.endProcessAction(
-              this.retryProcessAction.bind(this, 'writeRegisters', e),
-              ModbusStates.ProcessFailed,
-              this.retryProcessAction.name
-            )
-          })
-      } else if (length) this.processReadFromModbus(startAddress, startAddress, bus!, start, length, msg, tbl.get(fc)!, false)
+        this.processWriteToModbus(startAddress, this.data, bus!, tbl.get(registerType)!)  
+          
+      } else if (length) this.processReadFromModbus(startAddress, startAddress, bus!, start, length, registerType, tbl.get(registerType)!, false)
     }
   }
   // optimizes the timeout for slaves
@@ -349,12 +337,24 @@ export class ModbusStateMachine {
     bus: Bus,
     start: number,
     length: number,
-    msg: string,
-    read: IModbusProcess,
+    registerType: number,
+    process: IModbusProcess,
     afterTimeout: boolean
   ) {
+    let msg =
+    '(' +
+    this.pid +
+    '):processAction: slaveid: ' +
+    this.slaveId.slaveid +
+    ' startaddr: ' +
+    startAddress +
+    ' l:' +
+    length +
+    ' FC:' +
+    registerType
     let slave = bus?.getSlaveBySlaveId(this.slaveId.slaveid)
-    read.func
+
+    process.readFunc
       .bind(bus)(this.slaveId.slaveid, readAddress, length)
       .then((value) => {
         if (afterTimeout)
@@ -372,15 +372,15 @@ export class ModbusStateMachine {
           (slave.durationOfLongestModbusCall == undefined || slave.durationOfLongestModbusCall < value.duration)
         ) {
           slave.durationOfLongestModbusCall = value.duration
-          debugData(read.func.name + ': set durationOfLongestModbusCall for slaveid: ' + slave.slaveid + 'to: ' + value.duration)
+          debugData(process.readFunc.name + ': set durationOfLongestModbusCall for slaveid: ' + slave.slaveid + 'to: ' + value.duration)
           if (slave.modbusTimout > slave.durationOfLongestModbusCall * 2 && slave.modbusTimout > minTimeout) {
             // slave.modbusTimout = slave.durationOfLongestModbusCall * 2
-            debugData(read.func.name + ': set modbusTimout for slaveid: ' + slave.slaveid + 'to: ' + slave.modbusTimout)
+            debugData(process.readFunc.name + ': set modbusTimout for slaveid: ' + slave.slaveid + 'to: ' + slave.modbusTimout)
           }
         }
         if (value.result) {
           debugData(
-            read.func.name +
+            process.readFunc.name +
               ': ' +
               msg +
               ', data: ' +
@@ -399,16 +399,16 @@ export class ModbusStateMachine {
                 buffer: buf,
               },
             }
-            read.resultTable.set(startAddress + idx, r)
+            process.resultTable.set(startAddress + idx, r)
           }
         }
         if (value.error) {
-          debugData(read.func.name + ': ' + msg + ', error: ' + value.error.message + ' duration: ' + value.duration)
+          debugData(process.readFunc.name + ': ' + msg + ', error: ' + value.error.message + ' duration: ' + value.duration)
           for (let idx = 0; idx < length; idx++) {
             let r: IReadRegisterResultOrError = {
               error: value.error,
             }
-            read.resultTable.set(startAddress + idx, r)
+            process.resultTable.set(startAddress + idx, r)
           }
         }
 
@@ -422,7 +422,7 @@ export class ModbusStateMachine {
         else debugTime('read fail Total duration: ' + (Date.now() - start))
         if (e.errno == 'ETIMEDOUT' && this.timeoutCount++ < maxTimeouts) {
           this.logNotice(
-            read.func.name +
+            process.readFunc.name +
               ' TIMEOUT: slave:' +
               slave?.slaveid +
               ' address: ' +
@@ -433,14 +433,41 @@ export class ModbusStateMachine {
               (e.readDetails ? e.readDetails : '') +
               ' retrying ... '
           )
-          this.processReadFromModbus(startAddress, readAddress, bus, start, length, msg, read, true)
+          this.processReadFromModbus(startAddress, readAddress, bus, start, length, registerType, process, true)
           return
         }
 
-        debugData(read.func.name + ':' + msg + ' failed: ' + e.message)
+        debugData(process.readFunc.name + ':' + msg + ' failed: ' + e.message)
         e.readDetails = ' slave: ' + this.slaveId.slaveid + ' startAddress: ' + startAddress + ' length: ' + length + ''
         this.endProcessAction(
-          this.retryProcessAction.bind(this, read.func.name, e),
+          this.retryProcessAction.bind(this, process.readFunc.name, e),
+          ModbusStates.ProcessFailed,
+          this.retryProcessAction.name
+        )
+      })
+  }
+
+  private processWriteToModbus(
+    startAddress: number,
+    data: ReadRegisterResult,
+    bus: Bus,
+    process: IModbusProcess
+  ) {
+    if (!process.writeFunc) {
+      debugData('processAction:' + 'No write function defined')
+      this.endProcessAction(this.processAction)
+      return
+    }
+
+    process.writeFunc
+      .bind(bus)(this.slaveId.slaveid, startAddress, data)
+      .then(() => {
+            this.preparedAddressesIndex++
+            this.next(ModbusStates.Result, this.closeAction)
+          })
+      .catch((e: any) => {
+        this.endProcessAction(
+          this.retryProcessAction.bind(this, 'writeRegisters', e),
           ModbusStates.ProcessFailed,
           this.retryProcessAction.name
         )
@@ -549,7 +576,10 @@ export class ModbusStateMachine {
         case ModbusRegisterType.Coils:
           this.result.coils.set(a, { error: e })
           break
-      }
+        case ModbusRegisterType.DiscreteInputs:
+          this.result.discreteInputs.set(a, { error: e })
+          break
+        }
     if (e.errno == 'ETIMEDOUT') {
       let bus = Bus.getBus(this.slaveId.busid)
       let slave = bus?.getSlaveBySlaveId(this.slaveId.slaveid)
@@ -649,7 +679,10 @@ export class ModbusStateMachine {
       debug('analogInputs(' + this.pid + '): (' + key + '/' + JSON.stringify(this.result.analogInputs.get(key)) + ')')
     }
     for (let key of this.result.coils.keys()) {
-      debug('analogInputs(' + this.pid + '): (' + key + '/' + JSON.stringify(this.result.coils.get(key)) + ')')
+      debug('coils(' + this.pid + '): (' + key + '/' + JSON.stringify(this.result.coils.get(key)) + ')')
+    }
+    for (let key of this.result.discreteInputs.keys()) {
+      debug('discreteInputs(' + this.pid + '): (' + key + '/' + JSON.stringify(this.result.discreteInputs.get(key)) + ')')
     }
     this.returnAction(this.result)
   }

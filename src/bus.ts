@@ -361,6 +361,41 @@ export class Bus {
     })
     return rc
   }
+  readCoils(slaveid: number, dataaddress: number, length: number): Promise<ReadRegisterResultWithDuration> {
+    let rc = new Promise<ReadRegisterResultWithDuration>((resolve, reject) => {
+      if (this.modbusClient == undefined) {
+        log.log(LogLevelEnum.error, 'modbusClient is undefined')
+        return
+      } else {
+        this.prepareRead(slaveid)
+        this.modbusClientActionMutex.acquire().then(() => {
+          let start = Date.now()
+          this.modbusClient!.readCoils(dataaddress, length)
+            .then((resolveBoolean) => {
+              this.modbusClientActionMutex.release()
+              this.clearModbusTimout()
+              let readResult: ReadRegisterResult = {
+                data: [],
+                buffer: Buffer.allocUnsafe(0),
+              }
+              resolveBoolean.data.forEach((d) => {
+                readResult.data.push(d ? 1 : 0)
+              })
+              let rc: ReadRegisterResultWithDuration = {
+                result: readResult,
+                duration: Date.now() - start,
+              }
+              resolve(rc)
+            })
+            .catch((e) => {
+              this.modbusClientActionMutex.release()
+              this.setModbusTimout(reject, e)
+            })
+        })
+      }
+    })
+    return rc
+  }
   private prepareRead(slaveid: number) {
     this.modbusClient!.setID(slaveid)
     let slave = this.getSlaveBySlaveId(slaveid)
@@ -410,7 +445,10 @@ export class Bus {
           data.data.forEach((d) => {
             dataB.push(d == 1)
           })
-          this.modbusClient!.writeCoils(dataaddress, dataB)
+          if (dataB.length === 1) {
+            //Using writeCoil for single value in case of situation that device does not support multiple at once like
+            // LC Technology relay/input boards
+            this.modbusClient!.writeCoil(dataaddress, dataB[0])
             .then(() => {
               this.modbusClientActionMutex.release()
               this.modbusClientTimedOut = false
@@ -420,6 +458,18 @@ export class Bus {
               this.modbusClientActionMutex.release()
               this.setModbusTimout(reject, e)
             })
+          } else {
+            this.modbusClient!.writeCoils(dataaddress, dataB)
+              .then(() => {
+                this.modbusClientActionMutex.release()
+                this.modbusClientTimedOut = false
+                resolve()
+              })
+              .catch((e) => {
+                this.modbusClientActionMutex.release()
+                this.setModbusTimout(reject, e)
+              })
+          }
         })
       }
     })
@@ -552,6 +602,9 @@ export class Bus {
               case ModbusRegisterType.Coils:
                 if (!values!.coils.has(address.address)) cacheFailed = true
                 break
+              case ModbusRegisterType.DiscreteInputs:
+                  if (!values!.discreteInputs.has(address.address)) cacheFailed = true
+                  break
             }
           })
         })
@@ -583,6 +636,9 @@ export class Bus {
               case ModbusRegisterType.Coils:
                 if (!values.coils.has(address.address)) values.coils.set(address.address, noData)
                 break
+              case ModbusRegisterType.DiscreteInputs:
+                  if (!values.discreteInputs.has(address.address)) values.discreteInputs.set(address.address, noData)
+                  break
             }
           })
           // Store it for cache
@@ -662,6 +718,10 @@ export class Bus {
             case ModbusRegisterType.Coils:
               m = saddresses!.coils
               r = rc.coils
+              break
+            case ModbusRegisterType.DiscreteInputs:
+              m = saddresses!.discreteInputs
+              r = rc.discreteInputs
               break
           }
           value = m.get(address.address)

@@ -27,7 +27,7 @@ export class Modbus {
       return new ModbusCache('write', true).writeRegisters(
         { busid: bus.getId(), slaveid: slaveid },
         entity.modbusAddress,
-        M2mSpecification.getWriteFunctionCode(entity.registerType),
+        entity.registerType,
         modbusValue
       )
     }
@@ -44,13 +44,13 @@ export class Modbus {
       })
     } else if (entity) {
       let converter = ConverterMap.getConverter(entity)
-      if (entity.modbusAddress && entity.registerType && converter) {
+      if (entity.modbusAddress !== undefined && entity.registerType && converter) {
         let modbusValue = converter?.mqtt2modbus(spec, entityid, mqttValue)
         if (modbusValue && modbusValue.data.length > 0) {
           return new ModbusCache('write', true).writeRegisters(
             { busid: bus.getId(), slaveid: slaveid },
             entity.modbusAddress,
-            M2mSpecification.getWriteFunctionCode(entity.registerType),
+            entity.registerType,
             modbusValue
           )
         } else throw new Error('No modbus address or function code or converter not found for entity ' + entityid + ' ')
