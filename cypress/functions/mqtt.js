@@ -43,7 +43,8 @@ class MqttHelper {
     this.client.on('reconnect', this.onReconnect.bind(this, this.client))
   }
   close() {
-    this.client.end()
+    if( this.client )
+        this.client.end()
   }
   connect(connectionData) {
     this.connectionData = structuredClone(connectionData)
