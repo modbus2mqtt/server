@@ -1,0 +1,222 @@
+entities:
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 0
+    id: 2
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput1
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 1
+    id: 3
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput2
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 2
+    id: 4
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput3
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 3
+    id: 5
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput4
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 4
+    id: 6
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput5
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 5
+    id: 7
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput6
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 6
+    id: 8
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput7
+  - registerType: 2
+    readonly: true
+    converter:
+      name: binary
+    modbusAddress: 7
+    id: 9
+    converterParameters: {}
+    valid: true
+    mqttname: discreteinput8
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 0
+    id: 10
+    converterParameters: {}
+    valid: true
+    mqttname: relay1
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 1
+    id: 11
+    converterParameters: {}
+    valid: true
+    mqttname: relay2
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 2
+    id: 12
+    converterParameters: {}
+    valid: true
+    mqttname: relay3
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 3
+    id: 13
+    converterParameters: {}
+    valid: true
+    mqttname: relay4
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 4
+    id: 14
+    converterParameters: {}
+    valid: true
+    mqttname: relay5
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 5
+    id: 15
+    converterParameters: {}
+    valid: true
+    mqttname: relay6
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 6
+    id: 16
+    converterParameters: {}
+    valid: true
+    mqttname: relay7
+  - registerType: 1
+    readonly: false
+    converter:
+      name: binary
+    modbusAddress: 7
+    id: 17
+    converterParameters: {}
+    valid: true
+    mqttname: relay8
+i18n:
+  - lang: en
+    texts:
+      - textId: e2
+        text: Discrete Input 1
+      - textId: e3
+        text: Discrete Input 2
+      - textId: e4
+        text: Discrete Input 3
+      - textId: e5
+        text: Discrete Input 4
+      - textId: e6
+        text: Discrete Input 5
+      - textId: e7
+        text: Discrete Input 6
+      - textId: e8
+        text: Discrete Input 7
+      - textId: e9
+        text: Discrete Input 8
+      - textId: name
+        text: Shenzen LC Technology Relay Input board
+      - textId: e10
+        text: Relay 1
+      - textId: e11
+        text: Relay 2
+      - textId: e12
+        text: Relay 3
+      - textId: e13
+        text: Relay 4
+      - textId: e14
+        text: Relay 5
+      - textId: e15
+        text: Relay 6
+      - textId: e16
+        text: Relay 7
+      - textId: e17
+        text: Relay 8
+filename: lc-technology-relay-input
+nextEntityId: 19
+model: Relay Input board
+manufacturer: Shenzen LC Technology
+version: "0.3"
+testdata:
+  coils:
+    - address: 0
+      value: 0
+    - address: 1
+      value: 0
+    - address: 2
+      value: 0
+    - address: 3
+      value: 0
+    - address: 4
+      value: 0
+    - address: 5
+      value: 0
+    - address: 6
+      value: 0
+    - address: 7
+      value: 0
+  discreteInputs:
+    - address: 0
+      value: 0
+    - address: 1
+      value: 1
+    - address: 2
+      value: 0
+    - address: 3
+      value: 0
+    - address: 4
+      value: 0
+    - address: 5
+      value: 0
+    - address: 6
+      value: 0
+    - address: 7
+      value: 0

@@ -1,0 +1,11 @@
+version: "0.1"
+files:
+  - url: specifications/files/_new/modbus_rtu__ip_en.pdf
+    fileLocation: 0
+    usage: doc
+  - url: specifications/files/_new/1-2004091S42X59.jpg
+    fileLocation: 0
+    usage: img
+  - url: http://www.chinalctech.com/cpzx/Smarthome/455.html
+    fileLocation: 1
+    usage: doc
