@@ -23,6 +23,6 @@ mqttconnect:
 secretsfile: secrets.txt
 mqttusehassiotoken: false
 githubPersonalToken: "!secret githubPersonalToken"
-mqttusehassio: false
+mqttusehassio: true
 noAuthentication: false
 supervisor_host: supervisor
