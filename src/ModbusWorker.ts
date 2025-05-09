@@ -15,6 +15,7 @@ export interface IModbusAPI {
   writeHoldingRegisters: TModbusWriteFunction
   writeCoils: TModbusWriteFunction
   reconnectRTU: (task: string) => Promise<void>
+  getCacheId():number
 }
 export class ModbusWorker {
   protected functionCodeReadMap: Map<ModbusRegisterType, TModbusReadFunction>
@@ -57,7 +58,7 @@ export class ModbusWorker {
           current.address.write
         )
           .then(() => {
-            current!.onResolve(current!,[])
+            current!.onResolve(current!, [])
           })
           .catch((e) => {
             current!.onError(current!, e)
@@ -69,7 +70,7 @@ export class ModbusWorker {
           current.address.length == undefined ? 1 : current.address.length
         )
           .then((result) => {
-            current!.onResolve(current!,result.data)
+            current!.onResolve(current!, result.data)
           })
           .catch((e) => {
             current!.onError(current!, e)

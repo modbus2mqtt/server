@@ -5,7 +5,13 @@ import { Bus } from '../src/bus'
 import { initBussesForTest, yamlDir } from './configsbase'
 import { ModbusServer, XYslaveid } from './../src/modbusTCPserver'
 import { IdentifiedStates, ImodbusEntity, ImodbusSpecification } from '@modbus2mqtt/specification.shared'
-import { ConfigSpecification, IModbusResultOrError, LogLevelEnum } from '@modbus2mqtt/specification'
+import {
+  ConfigSpecification,
+  emptyModbusValues,
+  IModbusResultOrError,
+  ImodbusValues,
+  LogLevelEnum,
+} from '@modbus2mqtt/specification'
 import { singleMutex } from './configsbase'
 import { Iconfiguration, PollModes } from '@modbus2mqtt/server.shared'
 import { ConfigBus } from '../src/configbus'
@@ -142,30 +148,6 @@ function testWrite(
     }
   })
 }
-it('Bus getSpecsForDevice', (done) => {
-  prepareIdentification()
-  if (Config.getConfiguration().fakeModbus) debug(LogLevelEnum.notice, 'Fakemodbus')
-  Bus.getBus(0)!
-    .getAvailableSpecs(1, false)
-    .then((ispec) => {
-      let wlt = false
-      let other = false
-      expect(ispec).toBeDefined()
-
-      ispec.forEach((spec) => {
-        if (spec!.filename === 'waterleveltransmitter') {
-          wlt = true
-          expect(spec!.identified == IdentifiedStates.identified)
-        } else {
-          other = true
-          expect(spec!.identified == IdentifiedStates.notIdentified)
-        }
-      })
-      expect(other).toBeTruthy()
-      expect(wlt).toBeTruthy()
-      done()
-    })
-})
 var readConfig = new Config()
 var prepared: boolean = false
 function prepareIdentification() {
@@ -176,12 +158,56 @@ function prepareIdentification() {
     readConfig.readYaml()
   }
 }
-it('Modbus getSpecsForDevice with specific slaveId no results 0-3', (done) => {
+function readModbusRegisterFake(): Promise<ImodbusValues> {
+  return new Promise<ImodbusValues>((resolve, reject) => {
+    let ev = emptyModbusValues()
+    ev.holdingRegisters.set(3, { data: [40] })
+    ev.holdingRegisters.set(4, { data: [40] })
+    ev.holdingRegisters.set(5, { data: [2] })
+    resolve(ev)
+  })
+}
+it('Bus getSpecsForDevice', (done) => {
+  prepareIdentification()
+  if (Config.getConfiguration().fakeModbus) debug(LogLevelEnum.notice, 'Fakemodbus')
+  let bus = Bus.getBus(0)
+  expect(bus).toBeDefined()
+  bus!.readModbusRegister = readModbusRegisterFake
+  bus!
+    .getAvailableSpecs(1, false, 'en')
+    .then((ispec) => {
+      let wlt = false
+      let other = 0
+      let unknown = 0
+      expect(ispec).toBeDefined()
+
+      ispec.forEach((spec) => {
+        if (spec!.filename === 'waterleveltransmitter') {
+          wlt = true
+          expect(spec!.identified).toBe(IdentifiedStates.identified)
+        } else if (spec.identified == IdentifiedStates.unknown) {
+          unknown++
+        } else {
+          other++
+          expect(spec!.identified).toBe(IdentifiedStates.notIdentified)
+        }
+      })
+      expect(unknown).toBe(3)
+      expect(other).toBeGreaterThan(0)
+      expect(wlt).toBeTruthy()
+      done()
+    })
+    .catch((e) => {
+      debug(e.message)
+    })
+})
+
+it('Modbus getAvailableSpecs with specific slaveId no results 0-3', (done) => {
   prepareIdentification()
   Config['config'].fakeModbus = true
   if (Config.getConfiguration().fakeModbus) debug('Fakemodbus')
   Bus.getBus(0)!
-    .getAvailableSpecs(1, false)
+    .getAvailableSpecs(1, false, 'en')
     .then((ispec) => {
       expect(ispec).toBeDefined()
       expect(ispec.length).toBeGreaterThan(0)
@@ -231,6 +257,4 @@ describe('ServerTCP based', () => {
     entities: [{ id: 1, identified: IdentifiedStates.identified } as ImodbusEntity],
     identified: IdentifiedStates.identified,
   } as ImodbusSpecification
-
- 
 })

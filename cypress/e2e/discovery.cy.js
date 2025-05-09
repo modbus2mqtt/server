@@ -78,18 +78,19 @@ function addEntity(entitynum, modbusAddress, willLog) {
     .get('mat-option')
     .contains('number')
     .click(logSetting)
-  cy.get('app-entity:last [formControlName="readonly"]', logSetting).click(logSetting)
-
   cy.get('app-entity:last [formcontrolname="min"]', logSetting).type('0', { force: true, log: willLog })
   cy.get('app-entity:last [formcontrolname="max"]', logSetting).type('1000', { force: true, log: willLog })
+
   cy.get('app-entity:last mat-select[formControlName="registerType"]', logSetting)
     .click()
     .get('mat-option')
     .contains('Holding')
-    .click(logSetting)
+    .click()
+  cy.get('app-entity:last [formControlName="readonly"]', logSetting).click(logSetting)
   cy.get('app-entity:last mat-card mat-card-header button:has(mat-icon:contains("add_circle"))', logSetting)
     .last()
     .click({ force: true, log: willLog })
+
 }
 function saveSpecification(willLog) {
   let logSetting = { log: willLog }
@@ -97,8 +98,8 @@ function saveSpecification(willLog) {
   cy.log('Save Specification ')
   cy.get('div.saveCancel:first button', logSetting).eq(0, logSetting).should('not.is.disabled')
   cy.get('div.saveCancel:first button', logSetting).eq(0, logSetting).trigger('click', logSetting)
-//  cy.get('div.saveCancel:first button', logSetting).eq(0, logSetting).should('is.disabled')
   cy.get('div.saveCancel:first button', logSetting).eq(1, logSetting).trigger('click', logSetting)
+  cy.wait(1000)
   cy.url().should('contain', prefix + '/slaves')
 }
 function addSlave(willLog) {
@@ -106,7 +107,7 @@ function addSlave(willLog) {
   cy.log('Add Slave ')
   cy.url().should('contain', prefix + '/slaves')
   cy.get('[formcontrolname="detectSpec"]', logSetting).click(logSetting)
-  cy.get('[formcontrolname="slaveId"]', logSetting).type('10{enter}', { force: true, log: willLog })
+  cy.get('[formcontrolname="slaveId"]', logSetting).type('3{enter}', { force: true, log: willLog })
   cy.get('app-select-slave:first mat-expansion-panel-header[aria-expanded=false]', logSetting).then((elements) => {
     if (elements.length >= 1) {
       elements[0].click(logSetting)
@@ -196,8 +197,8 @@ describe('MQTT Discovery Tests', () => {
           setUrls(true)
           addEntity(1, 1, false)
           addEntity(2, 3, false)
-          saveSpecification(false)
-          //Homeassistant need time between discovery and state sending
+          saveSpecification(true)
+          //Homeassistant needs time between discovery and state sending
           cy.wait(1000)
             .task('mqttGetTopicAndPayloads')
             .then((tAndP) => {

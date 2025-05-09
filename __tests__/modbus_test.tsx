@@ -36,7 +36,7 @@ beforeEach(() => {
       {
         id: 1,
         mqttname: 'mqtt',
-        converter: { name: 'sensor' as Converters, registerTypes: [] },
+        converter: 'sensor' as Converters,
         modbusAddress: 4,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,
@@ -51,7 +51,7 @@ beforeEach(() => {
       {
         id: 2,
         mqttname: 'mqtt2',
-        converter: { name: 'select_sensor' as Converters, registerTypes: [] },
+        converter: 'select_sensor' as Converters,
         modbusAddress: 2,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,
@@ -61,7 +61,7 @@ beforeEach(() => {
       {
         id: 3,
         mqttname: 'mqtt3',
-        converter: { name: 'select' as Converters, registerTypes: [] },
+        converter: 'select' as Converters,
         modbusAddress: 3,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,
@@ -100,7 +100,7 @@ var ent: ImodbusEntity = {
   mqttValue: '',
   identified: IdentifiedStates.unknown,
   converterParameters: { multiplier: 0.01 },
-  converter: { name: 'number', registerTypes: [] },
+  converter: 'number',
 }
 var ents: Ientity[] = [ent]
 var entText: ImodbusEntity = {
@@ -113,7 +113,7 @@ var entText: ImodbusEntity = {
   mqttValue: '',
   identified: IdentifiedStates.unknown,
   converterParameters: { stringlength: 10 },
-  converter: { name: 'text', registerTypes: [] },
+  converter: 'text',
 }
 var readConfig = new Config()
 var prepared: boolean = false
@@ -186,7 +186,7 @@ describe('Modbus read', () => {
         min: 0.02,
         max: 0.04,
       }
-    ent.converter = { name: 'select', registerTypes: [] }
+    ent.converter = 'select'
     ent.modbusValue = [1]
     ent.converterParameters = {
       optionModbusValues: [0, 1, 2, 3],
@@ -244,7 +244,7 @@ xit('Modbus modbusDataToSpec spec.identified = identified', () => {
       {
         id: 1,
         mqttname: 'mqtt',
-        converter: { name: 'number' as Converters, registerTypes: [] },
+        converter: 'number' as Converters,
         modbusAddress: 4,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,
@@ -259,7 +259,7 @@ xit('Modbus modbusDataToSpec spec.identified = identified', () => {
       {
         id: 2,
         mqttname: 'mqtt2',
-        converter: { name: 'select_sensor' as Converters, registerTypes: [] },
+        converter: 'select_sensor' as Converters,
         modbusAddress: 2,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,
@@ -275,7 +275,7 @@ xit('Modbus modbusDataToSpec spec.identified = identified', () => {
       {
         id: 3,
         mqttname: 'mqtt3',
-        converter: { name: 'select_sensor' as Converters, registerTypes: [] },
+        converter: 'select_sensor' as Converters,
         modbusAddress: 3,
         registerType: ModbusRegisterType.HoldingRegister,
         readonly: true,

@@ -1,6 +1,6 @@
 import { ImodbusValues, IModbusResultOrError, LogLevelEnum } from '@modbus2mqtt/specification'
 import { ModbusRegisterType } from '@modbus2mqtt/specification.shared'
-import {  IQueueOptions, ModbusRTUQueue } from './ModbusRTUQueue'
+import { IQueueOptions, ModbusRTUQueue } from './ModbusRTUQueue'
 import { Logger } from '@modbus2mqtt/specification'
 import Debug from 'debug'
 import { ImodbusAddress, ModbusTasks } from '@modbus2mqtt/server.shared'
@@ -14,11 +14,10 @@ const logNoticeMaxWaitTime = 1000 * 60 * 30 // 30 minutes
 
 export interface IexecuteOptions extends IQueueOptions {
   printLogs?: boolean
-  errorHandling:{
-    split?:boolean,
-    retry?:boolean
+  errorHandling: {
+    split?: boolean
+    retry?: boolean
   }
-
 }
 interface ImodbusAddressesWithSlave {
   slave: number
@@ -97,13 +96,13 @@ export class ModbusRTUProcessor {
     })
     return size
   }
-  private getTask( options: IexecuteOptions):ModbusTasks{
-    return  options.task
+  private getTask(options: IexecuteOptions): ModbusTasks {
+    return options.task
   }
   execute(slaveId: number, addresses: Set<ImodbusAddress>, options: IexecuteOptions): Promise<ImodbusValues> {
     return new Promise<ImodbusValues>((resolve) => {
       let preparedAddresses = this.prepare(slaveId, addresses)
-      
+
       debug(ModbusTasks[options.task] + ': slaveId: ' + slaveId + '=====================')
       for (let a of preparedAddresses.addresses) {
         debug(a.registerType + ':' + a.address + '(' + (a.length ? a.length : 1) + ')')
@@ -127,7 +126,7 @@ export class ModbusRTUProcessor {
         this.queue.enqueue(
           preparedAddresses.slave,
           address,
-          (queueEntry,data) => {
+          (queueEntry, data) => {
             if (data == undefined || undefined != queueEntry.address.write)
               throw new Error(
                 'Only read results expected for slave: ' +
@@ -148,7 +147,8 @@ export class ModbusRTUProcessor {
             else resultMaps.get(queueEntry.address.registerType)!.set(queueEntry.address.address, { data: data })
             let valueCount = this.countResults(values)
             debug(
-              ModbusTasks[options.task] + ": " +
+              ModbusTasks[options.task] +
+                ': ' +
                 slaveId +
                 '/' +
                 valueCount +
@@ -163,7 +163,7 @@ export class ModbusRTUProcessor {
                 data[0]
             )
             if (valueCount == addressCount) {
-              debug(ModbusTasks[options.task]  + ': slaveId: ' + slaveId + ' addresses.length:' + preparedAddresses.addresses.length)
+              debug(ModbusTasks[options.task] + ': slaveId: ' + slaveId + ' addresses.length:' + preparedAddresses.addresses.length)
               resolve(values)
             }
           },
@@ -171,7 +171,7 @@ export class ModbusRTUProcessor {
             let r: IModbusResultOrError = { error: error }
 
             let id =
-            ModbusTasks[options.task]  +
+              ModbusTasks[options.task] +
               'slave: ' +
               currentEntry.slaveId +
               ' Reg: ' +
@@ -187,12 +187,13 @@ export class ModbusRTUProcessor {
             resultCount++
 
             if (currentEntry.address.length != undefined)
-              for (let idx = 0; idx < currentEntry.address.length; idx++) resultMaps.get(currentEntry.address.registerType)!.set(currentEntry.address.address + idx, r)
+              for (let idx = 0; idx < currentEntry.address.length; idx++)
+                resultMaps.get(currentEntry.address.registerType)!.set(currentEntry.address.address + idx, r)
             else resultMaps.get(currentEntry.address.registerType)!.set(currentEntry.address.address, r)
 
             let valueCount = this.countResults(values)
             if (valueCount == addressCount) {
-              debug('Finished slaveId: ' + slaveId + ' addresses.length:' + preparedAddresses.addresses.length)
+              debug('Finished ' + id)
               resolve(values)
             }
           },

@@ -48,7 +48,7 @@ entities:
     readonly: false
     converter:
       name: select
-    modbusAddress: 4
+    modbusAddress: 5
     converterParameters:
       optionModbusValues:
         - 0

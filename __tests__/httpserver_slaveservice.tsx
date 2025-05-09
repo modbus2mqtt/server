@@ -129,7 +129,11 @@ it('GET state topic', (done) => {
 
 test('GET command Entity topic', (done) => {
   let mockDiscover = prepareMqttDiscover()
-  let url = '/' + mockDiscover.slave.getEntityCommandTopic(mockDiscover.slave.getSpecification()!.entities[2])!.commandTopic
+  ConfigBus.addSpecification(mockDiscover.slave['slave'])
+  let spec = mockDiscover.slave.getSpecification()
+  let en: any = spec!.entities[2] as any
+  en.converter = { name: 'doesntmatter' }
+  let url = '/' + mockDiscover.slave.getEntityCommandTopic(spec!.entities[2] as any)!.commandTopic
   url = url + '20.2'
   supertest(httpServer['app'])
     .get(url)

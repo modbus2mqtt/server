@@ -14,7 +14,7 @@ export enum ModbusErrorActions {
 export interface IQueueEntry {
   slaveId: number
   address: ImodbusAddress
-  onResolve: (queueEntry:IQueueEntry, result?: number[]) => void
+  onResolve: (queueEntry: IQueueEntry, result?: number[]) => void
   onError: (queueEntry: IQueueEntry, e: any) => void
   options: IQueueOptions
   errorState?: ModbusErrorStates
@@ -24,9 +24,9 @@ export interface IQueueEntry {
 export interface IQueueOptions {
   useCache?: boolean
   task: ModbusTasks
-  errorHandling:{
-    split?:boolean,
-    retry?:boolean
+  errorHandling: {
+    split?: boolean
+    retry?: boolean
   }
 }
 export class ModbusRTUQueue {
@@ -42,7 +42,7 @@ export class ModbusRTUQueue {
   enqueue(
     slaveId: number,
     address: ImodbusAddress,
-    onResolve: (queueEntry:IQueueEntry,result?: number[]) => void,
+    onResolve: (queueEntry: IQueueEntry, result?: number[]) => void,
     onError: (queueEntry: IQueueEntry, e: any) => void,
     options: IQueueOptions
   ) {

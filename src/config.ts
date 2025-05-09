@@ -410,7 +410,7 @@ export class Config {
   readYamlAsync(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       try {
-        debugger
+      debugger
         if (!Config.yamlDir || Config.yamlDir.length == 0) {
           log.log(LogLevelEnum.error, 'Yamldir not defined in command line')
         }

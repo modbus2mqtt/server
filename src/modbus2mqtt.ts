@@ -21,6 +21,7 @@ process.on('unhandledRejection', (reason, p) => {
 })
 process.on('SIGINT', () => {
   if (httpServer) httpServer.close()
+  Bus.stopBridgeServers()
   process.exit(1)
 })
 
@@ -126,7 +127,12 @@ export class Modbus2Mqtt {
                     )
                     new ConfigSpecification().deleteNewSpecificationFiles()
                     // clean cache once per hour
-                    setInterval(()=>{Bus.cleanupCaches()},1000*60*60)
+                    setInterval(
+                      () => {
+                        Bus.cleanupCaches()
+                      },
+                      1000 * 60 * 60
+                    )
                     if (process.env.MODBUS_NOPOLL == undefined) {
                       md.startPolling()
                     } else {

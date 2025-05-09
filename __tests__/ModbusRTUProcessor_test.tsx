@@ -2,7 +2,7 @@ import { jest, expect, it } from '@jest/globals'
 import { ModbusRegisterType } from '@modbus2mqtt/specification.shared'
 import test from 'node:test'
 import { ModbusRTUProcessor } from '../src/ModbusRTUProcessor'
-import {  IQueueEntry, ModbusErrorActions, ModbusRTUQueue } from '../src/ModbusRTUQueue'
+import { IQueueEntry, ModbusErrorActions, ModbusRTUQueue } from '../src/ModbusRTUQueue'
 import { ImodbusAddress, ModbusTasks } from '@modbus2mqtt/server.shared'
 function addAddresses(addresses: Set<ImodbusAddress>, registerType: ModbusRegisterType, startAddress: number, endAddress: number) {
   for (let idx = startAddress; idx < endAddress; idx++)
@@ -42,7 +42,7 @@ function prepareQueue(): IQueueEntry {
       return ModbusErrorActions.notHandled
     },
     onResolve(result) {},
-    options:{task:ModbusTasks.deviceDetection, errorHandling:{retry:true}}
+    options: { task: ModbusTasks.deviceDetection, errorHandling: { retry: true } },
   }
   return qe
 }
@@ -55,7 +55,7 @@ it('execute', (done) => {
 
   let queue = new ModbusRTUQueue()
   let modbusProcessor = new ModbusRTUProcessor(queue)
-  modbusProcessor.execute(1, addresses,{task: ModbusTasks.deviceDetection, errorHandling:{retry:true}}).then((result) => {
+  modbusProcessor.execute(1, addresses, { task: ModbusTasks.deviceDetection, errorHandling: { retry: true } }).then((result) => {
     expect(result.coils.size).toBe(4)
     result.coils.forEach((res) => {
       expect(res.error).not.toBeDefined()
@@ -74,7 +74,7 @@ it('execute', (done) => {
     let entries = queue.getEntries()
     queue.clear()
     entries.forEach((qe, idx) => {
-      if (qe.address.registerType == ModbusRegisterType.Coils) qe.onResolve(qe,[1, 1, 0, 0])
+      if (qe.address.registerType == ModbusRegisterType.Coils) qe.onResolve(qe, [1, 1, 0, 0])
       else if (qe.address.address == 0 && qe.address.length != undefined && qe.address.length > 1) {
         let e: any = new Error('Timeout')
         e.errno = 'ETIMEDOUT'

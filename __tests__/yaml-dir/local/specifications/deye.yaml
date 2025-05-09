@@ -29,8 +29,7 @@ entities:
     mqttname: serialnumber
     variableConfiguration:
       targetParameter: 1
-    converter:
-      name: text
+    converter: text
     converterParameters:
       stringlength: 12
     registerType: 3
@@ -38,8 +37,7 @@ entities:
     modbusAddress: 2
   - id: 1
     mqttname: currentpower
-    converter:
-      name: number
+    converter: number
     converterParameters:
       uom: kW
     registerType: 3
@@ -50,12 +48,11 @@ entities:
     modbusAddress: 7
     registerType: 3
     readonly: true
-    converter:
-      name: select
+    converter: select
     converterParameters:
       optionModbusValues:
         - 1
         - 2
         - 3
-version: "0.3"
+version: "0.4"
 testdata: {}
