@@ -498,7 +498,10 @@ export class Config {
   writeConfiguration(config: Iconfiguration) {
     let cpConfig = structuredClone(config)
     Config.config = config
-    if (cpConfig.debugComponents && cpConfig.debugComponents.length) Debug.enable(cpConfig.debugComponents)
+    if (cpConfig.debugComponents && cpConfig.debugComponents.length) 
+        Debug.enable(cpConfig.debugComponents)
+      else
+        Debug.disable()
     let secrets = {}
     if (cpConfig.mqttconnect.password) {
       ;(secrets as any)['mqttpassword'] = cpConfig.mqttconnect.password
