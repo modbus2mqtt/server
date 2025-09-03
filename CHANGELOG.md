@@ -1,8 +1,8 @@
 # Changelog for server
 
-## [Unreleased](https://github.com/modbus2mqtt/server/tree/HEAD)
+## [v0.16.27](https://github.com/modbus2mqtt/server/tree/v0.16.27) (2025-09-03)
 
-[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.26...HEAD)
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.26...v0.16.27)
 
 **Implemented enhancements:**
 
@@ -10,6 +10,10 @@
 
 **Closed issues:**
 
+- Run modbus2mqtt as Node application [\#125](https://github.com/modbus2mqtt/server/issues/125)
+- No entity defined for this specification [\#123](https://github.com/modbus2mqtt/server/issues/123)
+- Topic error / Change Topic [\#122](https://github.com/modbus2mqtt/server/issues/122)
+- \[BUG\] Modbus-Connection fails on high input load [\#109](https://github.com/modbus2mqtt/server/issues/109)
 - Timeout after docker restart [\#107](https://github.com/modbus2mqtt/server/issues/107)
 - Error on starting the add-on [\#89](https://github.com/modbus2mqtt/server/issues/89)
 - \[BUG\] Variable Properties -\> Unit of Measurement -\> Referenced Entity not selectable [\#87](https://github.com/modbus2mqtt/server/issues/87)
@@ -386,7 +390,7 @@
 
 ## [0.8.0](https://github.com/modbus2mqtt/server/tree/0.8.0) (2024-06-21)
 
-[Full Changelog](https://github.com/modbus2mqtt/server/compare/e10c8d90dae26c00b0dde56c430bab4944c645de...0.8.0)
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/c887779cc03ebbe51dd0b2eb0456314798829518...0.8.0)
 
 
 
