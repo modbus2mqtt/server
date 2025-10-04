@@ -138,3 +138,4 @@ cypress/screenshots/
 coverage-summary.json
 coverage.txt
 cypress/servers/modbustcp.conf/yaml-dir/public/
+__tests__/backendTCP/public/**/*

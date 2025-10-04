@@ -36,10 +36,10 @@
   },
   "dependencies": {
     "@google-cloud/translate": "^8.3.0",
-    "@modbus2mqtt/angular": "github:modbus2mqtt/angular#v0.12.22",
-    "@modbus2mqtt/server.shared": "github:modbus2mqtt/server.shared#v0.13.18",
+    "@modbus2mqtt/angular": "github:modbus2mqtt/angular",
+    "@modbus2mqtt/server.shared": "github:modbus2mqtt/server.shared",
     "@modbus2mqtt/specification": "github:modbus2mqtt/specification#v0.15.34",
-    "@modbus2mqtt/specification.shared": "github:modbus2mqtt/specification.shared#v0.10.17",
+    "@modbus2mqtt/specification.shared": "github:modbus2mqtt/specification.shared",
     "@octokit/rest": "^20.1.1",
     "adm-zip": "^0.5.16",
     "assert": "^2.1.0",
