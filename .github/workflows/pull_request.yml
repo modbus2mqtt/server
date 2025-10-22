@@ -31,7 +31,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           component: true
+          install: false
       - name: Run jest component tests
         run: npx jest --reporters default --reporters github-actions
-        with:
-          install: false
+
