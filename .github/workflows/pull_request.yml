@@ -24,6 +24,7 @@ jobs:
       - name: Cypress run e2e test
         uses: cypress-io/github-action@v6
         with:
+          build: npm run build
           start: npm run e2e:start
       - name: Run jest component tests
         run: npx jest --reporters default --reporters github-actions

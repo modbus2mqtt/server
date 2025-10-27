@@ -143,3 +143,4 @@ __tests__/backendTCP/public/**/*
 nginx.conf
 nohup.out
 .angular/**/*
+bin/.pycache/**/* */

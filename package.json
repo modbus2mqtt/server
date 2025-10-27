@@ -1,6 +1,6 @@
 {
-  "name": "modbusqmtt",
-  "version": "0.16.27",
+  "name": "modbus2mqtt",
+  "version": "0.16.44",
   "sshserver": "homeassistant@homeassistant.lan",
   "homepage": "https://github.com/modbus2mqtt/server/README.md",
   "description": "server for modbus2mqtt for REST API of configuration and publishing modbus values to mqtt",
@@ -29,8 +29,7 @@
     "e2e:test": "./bin/testall.py test",
     "e2e:server.debug": "npm run e2e:end.debug && mkdir -p  'e2e/modbus2mqtt.temp/local' && echo 'httpport: 3004\nsupervisor_host: localhost:3006' >e2e/modbus2mqtt.temp/local/modbus2mqtt.yaml && npm run build.dev ",
     "e2e:end.debug": "rm -rf 'e2e/modbus2mqtt.temp'",
-    "build": "tsc && ng build --configuration production npx  @opengovsg/credits-generator",
-    "prepare": "tsc && ng build",
+    "build": "tsc && ng build --configuration production && npx @opengovsg/credits-generator",
     "prettier": "prettier --write '**/*.{ts,js,css,html,tsx}'"
   },
   "dependencies": {

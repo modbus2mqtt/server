@@ -1,8 +1,40 @@
 # Changelog for server
 
-## [Unreleased](https://github.com/modbus2mqtt/server/tree/HEAD)
+## [v0.16.41](https://github.com/modbus2mqtt/server/tree/v0.16.41) (2025-10-24)
 
-[Full Changelog](https://github.com/modbus2mqtt/server/compare/0.16.27...HEAD)
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.38...v0.16.41)
+
+**Merged pull requests:**
+
+- Fix regex match/search .latest [\#139](https://github.com/modbus2mqtt/server/pull/139) ([volkmarnissen](https://github.com/volkmarnissen))
+
+## [v0.16.38](https://github.com/modbus2mqtt/server/tree/v0.16.38) (2025-10-24)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.37...v0.16.38)
+
+## [v0.16.37](https://github.com/modbus2mqtt/server/tree/v0.16.37) (2025-10-24)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.36...v0.16.37)
+
+## [v0.16.36](https://github.com/modbus2mqtt/server/tree/v0.16.36) (2025-10-23)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.35...v0.16.36)
+
+## [v0.16.35](https://github.com/modbus2mqtt/server/tree/v0.16.35) (2025-10-23)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.34...v0.16.35)
+
+## [v0.16.34](https://github.com/modbus2mqtt/server/tree/v0.16.34) (2025-10-23)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.33...v0.16.34)
+
+## [v0.16.33](https://github.com/modbus2mqtt/server/tree/v0.16.33) (2025-10-23)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/v0.16.32...v0.16.33)
+
+## [v0.16.32](https://github.com/modbus2mqtt/server/tree/v0.16.32) (2025-10-23)
+
+[Full Changelog](https://github.com/modbus2mqtt/server/compare/0.16.27...v0.16.32)
 
 **Fixed bugs:**
 
@@ -19,6 +51,9 @@
 
 **Merged pull requests:**
 
+- Sync to upstream [\#138](https://github.com/modbus2mqtt/server/pull/138) ([volkmarnissen](https://github.com/volkmarnissen))
+- Mergepkgs [\#136](https://github.com/modbus2mqtt/server/pull/136) ([volkmarnissen](https://github.com/volkmarnissen))
+- Mergepkgs [\#135](https://github.com/modbus2mqtt/server/pull/135) ([volkmarnissen](https://github.com/volkmarnissen))
 - Fix after release: Removed version numbers in package.json [\#132](https://github.com/modbus2mqtt/server/pull/132) ([volkmarnissen](https://github.com/volkmarnissen))
 - Update push.yml [\#131](https://github.com/modbus2mqtt/server/pull/131) ([volkmarnissen](https://github.com/volkmarnissen))
 - Merge pull request \#5 from modbus2mqtt/main [\#130](https://github.com/modbus2mqtt/server/pull/130) ([volkmarnissen](https://github.com/volkmarnissen))

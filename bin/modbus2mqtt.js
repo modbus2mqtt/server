@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../dist/modbus2mqtt.js')
+require('../dist/server/modbus2mqtt.js')

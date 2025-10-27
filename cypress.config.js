@@ -201,7 +201,7 @@ module.exports = defineConfig({
             [
               'cypress/servers/mosquitto',
               'cypress/servers/modbus2mqtt ' + config.env.modbus2mqttE2eHttpPort,
-              'cypress/servers/modbus2mqtt ' + config.env.modbus2mqttAddonHttpPort + localhost + ' :' + config.env.nginxAddonHttpPort,
+              'cypress/servers/modbus2mqtt ' + config.env.modbus2mqttAddonHttpPort + ' ' + localhost + ' :' + config.env.nginxAddonHttpPort,
             ],
             [
               config.env.mosquittoAuthMqttPort,

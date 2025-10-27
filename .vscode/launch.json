@@ -8,7 +8,8 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["killServers"]
+      "args": ["--componentdir", "modbus2mqtt.latest/docker/rootfs/usr/app"],
+      "cwd": "${workspaceFolder}/../modbus2mqtt.dev/hassio-addon-repository"
     },
 
     {

@@ -4,17 +4,12 @@ name: Create and publish a Docker image
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
   push:
-    branches: ['main', 'release']
+    branches: ['main']
   workflow_dispatch:
     inputs:
-      component:
-        type: choice
-        description: Select component
-        options:
-          - server
-          - specification
-          - angular
-
+      version_number:
+        required: true
+        description: Version number <patch|minor| version number(E.g. 1.0.0) see npm version>
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
   REGISTRY: ghcr.io
@@ -26,68 +21,67 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      changelog: ${{steps.release_changes.outputs.changelog}}
+      tag:  ${{steps.set-tag.outputs.tag}}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: modbus2mqtt/modbus2mqtt.dev
-          path: .
-      - uses: actions/checkout@v4
-        with:
-          path: server
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: set package version number for update NPM version
+        id: set-tag
+        run: |
+          git config --global user.email "noreply@carcam360.de" 
+          git config --global user.name "Workflow User"
+          if [ "$EVENT" == 'push' ]
+          then
+          echo "tag=$(npm version patch )" >> $GITHUB_OUTPUT
+          else
+          echo "tag=$(npm version $VERSION )" >>$GITHUB_OUTPUT
+          fi
+          git push
+          sinceTag=""
+          if [[ "$VERSION" =~ \.0$ ]]; then  
+          minor=$(echo $VERSION| sed -e 's/[0-9]*\.\([0-9]*\)\.0$/\1/g')
+          major=$(echo $VERSION| sed -e 's/\([0-9]*\)\.[0-9]*\.0$/\1/g')
+          echo "since_tag=v$major.$(expr $minor - 1).0" >>$GITHUB_OUTPUT
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          VERSION: ${{ inputs.version_number }}
       - name: '✏️ Generate changelog'
         uses: heinrichreimer/action-github-changelog-generator@v2.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          output: server/CHANGELOG.md
-          headerLabel: '# Changelog for ${{github.event.repository.name}}'
-      - name: Update sha in package-lock.json
-        run: |
-          cd server
-          git stash
-          git pull --rebase
-          git stash pop
-          npm update ../specification.shared ../server.shared ../angular ../specification
-      - name: Checkin CHANGELOG.md and package-lock.json
-        uses: stefanzweifel/git-auto-commit-action@v5
+          output: CHANGELOG.md
+          headerLabel: '# Changelog for Modbus <=> MQTT'
+      - name: '✏️ Generate changelog for release'
+        id: release_changes
+        if: ${{ steps.set-tag.outputs.since_tag != '' }} 
+        uses: heinrichreimer/action-github-changelog-generator@v2.4
         with:
-          repository: ./server
-          commit_message: Update CHANGELOG.md
-          add_options: '-u'
-      - name: Wait for other workflow run or continue
-        id: init
-        run: |
-          gh auth status
-          owner=""
-          if [ "${{github.event.act.owner}}" != '' ]
-          then
-            owner="-o ${{github.event.act.owner}}"
-          else
-            owner="-o ${{github.repository_owner}}"
-          fi
-          echo "owner=$owner" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sinceTag: ${{ steps.set-tag.outputs.since_tag }}
+          headerLabel: Changes since Release ${{ steps.set-tag.outputs.since_tag }}
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v6
         with:
           node-version: 20.x
       - name: NPM install
+        id: npminstall
         run: |
-          #git config --global url."https://github.com/".insteadOf git@github.com:
-          #git config --global url."https://".insteadOf git://
-          npm init -y
-          # HEAD of release or main branch 
-          echo "npm install github:modbus2mqtt/server#${{github.ref_name}}"
-          npm install --omit=dev "github:modbus2mqtt/server#${{github.ref_name}}"
+          npm ci 
+          npm run build
+          npm shrinkwrap
+          archivename=$( npm pack | tail -1)
+          mv $archivename server.tgz
+          echo pkgname=$(echo $archivename | sed -e 's/\(.*\)-[^-]*$/\1/g') >> $GITHUB_OUTPUT
+          echo pkgversion=$(echo $archivename | sed -e 's/.*-\([^-]*\)$/\1/g' )  >> $GITHUB_OUTPUT
+          echo archivename=$archivename >> $GITHUB_OUTPUT
       - name: Archive node_modules directory artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: server-node_modules
-          path: |
-            package.json
-            package-lock.json
-            node_modules/
-            node_modules/.bin/
+          name: server
+          path: server.tgz
           retention-days: 1
           include-hidden-files: true
   release:
@@ -99,9 +93,7 @@ jobs:
     needs: init
     outputs:
       version: ${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
-      angular_version: ${{steps.prepareAddonDirectory.outputs.ANGULAR_VERSION}}
-      specification_version: ${{steps.prepareAddonDirectory.outputs.SPECIFICATION_VERSION}}
-      latest: ${{steps.releasecheck.outputs.latest}}
+      latest: ${{steps.getversion.outputs.latest}}
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
       contents: read
@@ -112,31 +104,33 @@ jobs:
       - name: Platform check
         id: platformcheck
         run: if [ ${{matrix.platform}} == 'ubuntu-22.04-arm' ]; then echo "platform=arm64"; else echo "platform=amd64";fi >> $GITHUB_OUTPUT
-      - name: Release Check
-        id: releasecheck
-        run: if [ ${{github.ref_name}} != 'release' ]; then echo "latest=.latest"; else echo "latest=";fi >> $GITHUB_OUTPUT
-
-      - uses: actions/checkout@v4
-        with:
-          repository: modbus2mqtt/modbus2mqtt.dev
-          path: .
       - uses: actions/checkout@v4
         with:
           repository: modbus2mqtt/hassio-addon-repository
-          path: hassio-addon-repository
           ref: refs/heads/main
           token: ${{ secrets.PAT }}
-
-      - name: 'create rootfs/usr/app directory'
-        run: mkdir -p "hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app"
-      - uses: actions/download-artifact@v4
+      - name: load artifact server
+        uses: actions/download-artifact@v4
         with:
-          name: server-node_modules
-          path: hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app
-      - name: list hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app
-        run: ls -R hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app
-      - name: list hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app
-        run: ls -R hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app
+          name: server
+          path: .
+      - name: get package.json version and extract server.tgz into /usr/app
+        id: getversion
+        run: |
+          tar xf server.tgz
+          latest=.latest
+          if grep -e 'version:\s*"[ 0-9.]*\.0"$' package/package.json >/dev/null ;then latest="";fi
+          mkdir -p "modbus2mqtt$latest/docker/rootfs/usr/app"
+          shopt -s dotglob
+          mv package/* modbus2mqtt$latest/docker/rootfs/usr/app
+          echo latest="$latest" >> $GITHUB_OUTPUT
+          rm server.tgz
+          rmdir package
+      - name: npm ci
+        run: |
+          cd modbus2mqtt${{steps.getversion.outputs.latest}}/docker/rootfs/usr/app
+          ls *.json
+          npm ci --omit=dev
       # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -145,14 +139,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
-      - name: Set COMPONENT variables
-        run: |
-          if [ "${{ inputs.component }}" != "" ];then echo "COMPONENT=${{ inputs.component }}">> $GITHUB_ENV;else  echo "COMPONENT=${{ github.event.repository.name }}" >> $GITHUB_ENV;fi
-          echo "COMPONENT = $COMP"
       - name: Prepare Addon Directory
         id: prepareAddonDirectory
         run: |
-          ./bin/releaseAddon.py --ref ${{github.ref}} --pkgjson "hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker/rootfs/usr/app/node_modules/../$COMPONENT" >>$GITHUB_OUTPUT
+          componentdir="modbus2mqtt${{steps.getversion.outputs.latest}}/docker/rootfs/usr/app"
+          "$componentdir/bin/releaseAddon.py" --componentdir "$componentdir" >>$GITHUB_OUTPUT
+          rm $componentdir/bin/*.py
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up QEMU
@@ -163,35 +155,42 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{steps.releasecheck.outputs.latest}}-${{steps.platformcheck.outputs.platform}}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{steps.getversion.outputs.latest}}-${{steps.platformcheck.outputs.platform}}
           labels: org.opencontainers.image.version=${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
           platforms: linux/${{steps.platformcheck.outputs.platform}}
-          context: hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}/docker
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{steps.releasecheck.outputs.latest}}-${{steps.platformcheck.outputs.platform}}:${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
+          context: modbus2mqtt${{steps.getversion.outputs.latest}}/docker
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{steps.getversion.outputs.latest}}-${{steps.platformcheck.outputs.platform}}:${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
           labels: ${{ steps.meta.outputs.labels }}
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
-      - name: Copy CHANGELOG.mds
+      - name: Copy CHANGELOG.md
         run: |
-          cd hassio-addon-repository/modbus2mqtt${{steps.releasecheck.outputs.latest}}
-          mkdir -p changes
-          ls -1 docker/rootfs/usr/app/node_modules/@modbus2mqtt | while read dir
-          do 
-            mkdir -p changes/$dir
-            cp docker/rootfs/usr/app/node_modules/../$dir/CHANGELOG.md changes/$dir
-          done 
+          cd modbus2mqtt${{steps.getversion.outputs.latest}}
+          cp docker/rootfs/usr/app/CHANGELOG.md CHANGELOG.md
           cd -
+          git stash
+          git pull --rebase
+          git stash pop
       - name: Checkin hassio-addon-repository
         if: ${{steps.platformcheck.outputs.platform == 'arm64' }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          repository: ./hassio-addon-repository
-          tagging_message: ${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
           commit_message: ${{steps.prepareAddonDirectory.outputs.TAG_NAME}}
+      - name: Release ${{ github.ref }}
+        if: ${{(steps.platformcheck.outputs.platform == 'arm64' ) &&(needs.init.outputs.changelog != '' )}}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{needs.init.outputs.tag }}
+          release_name: Release ${{needs.init.outputs.tag }}
+          body: ${{needs.init.outputs.changelog }}
+          draft: false
+          prerelease: false
   docker-tag:
     if: always()
     runs-on: ubuntu-latest
@@ -210,7 +209,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Test
+      - name: Build docker tag modbus2mqtt.latest and modbus2mqtt.${{needs.release.outputs.version}}
         env:
           VERSION: ${{needs.release.outputs.version}}
         run: |
