@@ -17,3 +17,4 @@ hassio-addon/**
 docker/**
 testHelpers/** 
 package.json.bck
+cypress
