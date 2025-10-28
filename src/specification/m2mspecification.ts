@@ -339,7 +339,7 @@ export class M2mSpecification implements IspecificationValidator {
         this.handleCloseContributionError('No Pull Number in specification. Unable to close contribution ' + spec.filename, reject)
         return
       }
-      let gh = new M2mGitHub(ConfigSpecification.githubPersonalToken!, join(ConfigSpecification.yamlDir, 'public'))
+      let gh = new M2mGitHub(ConfigSpecification.githubPersonalToken!, join(ConfigSpecification.getPublicDir()))
       gh.init()
         .then(() => {
           gh.getPullRequest(spec.pullNumber!)

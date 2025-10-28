@@ -1,3 +1,0 @@
-serialport: /dev/ttyUSB0
-timeout: 500
-baudrate: 9600

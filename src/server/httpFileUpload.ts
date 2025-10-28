@@ -4,7 +4,7 @@ import { Config, getSpecificationImageOrDocumentUrl } from './config'
 import { join } from 'path'
 import * as fs from 'fs'
 import { SpecificationFileUsage } from '../specification.shared'
-import { Logger, LogLevelEnum } from '../specification'
+import { ConfigSpecification, filesUrlPrefix, Logger, LogLevelEnum } from '../specification'
 const log = new Logger('httpFileUpload')
 
 type DestinationCallback = (error: Error | null, destination: string) => void
@@ -24,12 +24,13 @@ export function getFilenameForUpload(filename: string) {
 }
 export const fileStorage = multer.diskStorage({
   destination: (request: GetRequestWithUploadParameter, _file: Express.Multer.File, callback: DestinationCallback): void => {
-    let fileLocation = Config.getConfiguration().filelocation
+    let fileLocation = ConfigSpecification.getLocalDir()
+        
     if (fileLocation == undefined) {
       log.log(LogLevelEnum.error, 'Config.fileLocation is not defined. NO file upload possible')
     } else if (request.query.specification !== null) {
       let dir = getSpecificationImageOrDocumentUrl(
-        join(fileLocation, 'local'),
+        fileLocation,
         getFilenameForUpload(request.query.specification!),
         ''
       )

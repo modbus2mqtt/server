@@ -3,8 +3,8 @@ import * as http from 'http'
 import os from 'os'
 import { Request } from 'express'
 import * as express from 'express'
-import { ConverterMap, M2mGitHub } from '../specification'
-import { Config, MqttValidationResult, filesUrlPrefix } from './config'
+import { ConverterMap, filesUrlPrefix, M2mGitHub } from '../specification'
+import { Config, MqttValidationResult } from './config'
 import { Modbus } from './modbus'
 import {
   ImodbusSpecification,
@@ -130,18 +130,14 @@ export class HttpServer extends HttpServerBase {
     this.modbusCacheAvailable = true
   }
   override initApp() {
-    let fileLocation = Config.getConfiguration().filelocation
-    if (fileLocation == undefined) log.log(LogLevelEnum.error, 'Config Filelocation is not defined')
-    else {
-      let localdir = join(fileLocation, 'local', filesUrlPrefix)
-      let publicdir = join(fileLocation, 'public', filesUrlPrefix)
+      let localdir = join(ConfigSpecification.getLocalDir(), filesUrlPrefix)
+      let publicdir = join(ConfigSpecification.getPublicDir(), filesUrlPrefix)
       this.app.get(/.*/, (req: Request, res: http.ServerResponse, next) => {
         debug(req.url)
         next()
       })
       this.app.use('/' + filesUrlPrefix, express.static(localdir))
       this.app.use('/' + filesUrlPrefix, express.static(publicdir))
-    }
     this.app.use(this.handleSlaveTopics.bind(this))
     //@ts-ignore
     // app.use(function (err:any, req:any, res:any, next:any) {
@@ -278,7 +274,7 @@ export class HttpServer extends HttpServerBase {
       debug(req.url)
       let ghToken = Config.getConfiguration().githubPersonalToken
       ghToken = ghToken == undefined ? '' : ghToken
-      new M2mGitHub(ghToken, join(ConfigSpecification.yamlDir, 'public')).fetchPublicFiles()
+      new M2mGitHub(ghToken, ConfigSpecification.getPublicDir()).fetchPublicFiles()
       new ConfigSpecification().readYaml()
       this.returnResult(req, res, HttpErrorsEnum.OK, JSON.stringify({ result: 'OK' }))
     })

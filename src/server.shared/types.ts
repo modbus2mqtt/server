@@ -72,7 +72,6 @@ export interface Iconfiguration {
   mqttcaFile?: string
   mqttkeyFile?: string
   mqttcertFile?: string
-  filelocation?: string
   httpport: number
   rootUrl?: string
   supervisor_host?: string

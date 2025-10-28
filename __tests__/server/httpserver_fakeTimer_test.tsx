@@ -7,24 +7,23 @@ import { ConfigSpecification } from '../../src/specification'
 import { join } from 'path'
 import AdmZip from 'adm-zip'
 import { ConfigBus } from '../../src/server/configbus'
-import { yamlDir } from './configsbase'
-ConfigSpecification.yamlDir = yamlDir
+import { setConfigsDirsForTest } from './configsbase'
+setConfigsDirsForTest()
 new ConfigSpecification().readYaml()
-Config['sslDir'] = yamlDir
+
 
 var httpServer: HttpServer
 
 const oldAuthenticate: (req: any, res: any, next: () => void) => void = HttpServer.prototype.authenticate
 beforeAll(() => {
   return new Promise<void>((resolve, reject) => {
-    Config['yamlDir'] = yamlDir
     let cfg = new Config()
     cfg.readYamlAsync().then(() => {
       ConfigBus.readBusses()
       HttpServer.prototype.authenticate = (req, res, next) => {
         next()
       }
-      httpServer = new HttpServer(join(yamlDir, 'angular'))
+      httpServer = new HttpServer(join(Config.configDir, 'angular'))
 
       let rc = httpServer.init()
       resolve()

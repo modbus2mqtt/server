@@ -1,0 +1,27 @@
+mqttbasetopic: modbus2mqtt
+mqttdiscoveryprefix: homeassistant
+mqtttimeout: 10
+port: 3000
+fakeModbus: true
+version: "0.1"
+pollintervall: 1 min
+httpport: 3000
+mqttdiscoverylanguage: en
+rootUrl: http://localhost:3000
+password: "!secret password"
+username: "!secret username"
+tokenExpiryTime: 10min
+tokenExpiryTimeInMSec: 600000
+mqttconnect:
+  connectTimeout: 1000
+  username: "!secret mqttuser"
+  password: "!secret mqttpassword"
+  mqttserverurl: mqtt://doesnt_exist:1007
+  clientId: modbus2mqtt
+  clean: true
+secretsfile: secrets.txt
+mqttusehassiotoken: false
+githubPersonalToken: "!secret githubPersonalToken"
+noAuthentication: false
+supervisor_host: supervisor
+tcpBridgePort: 502

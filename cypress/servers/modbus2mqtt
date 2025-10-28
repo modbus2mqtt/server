@@ -16,20 +16,20 @@ DEBUGTMPDIR=e2e/modbus2mqtt.temp
 if [ -r e2e/modbus2mqtt.temp -a "$#" -ge 2 ]
 then
     rm -rf $DEBUGTMPDIR/public
-    rm -rf $DEBUGTMPDIR/local/specifications
-    rm -rf $DEBUGTMPDIR/local/busses
+    rm -rf $DEBUGTMPDIR/modbus2mqtt/specifications
+    rm -rf $DEBUGTMPDIR/modbus2mqtt/busses
     sleep infinity &
     MPID=$!
 else
-  mkdir -p $TMPDIR/local
-  echo 'httpport: '$HTTPPORT >$TMPDIR/local/modbus2mqtt.yaml
+  mkdir -p $TMPDIR/modbus2mqtt
+  echo 'httpport: '$HTTPPORT >$TMPDIR/modbus2mqtt/modbus2mqtt.yaml
   if [ $# -ge 2 ]
   then # port 3005
-    echo "supervisor_host: $localhost:3006" >>$TMPDIR/local/modbus2mqtt.yaml
+    echo "supervisor_host: $localhost:3006" >>$TMPDIR/modbus2mqtt/modbus2mqtt.yaml
     export HASSIO_TOKEN=abcd1234
   fi
   echo "TMPDIR=$TMPDIR"
-  node dist/server/modbus2mqtt.js -y $TMPDIR -s $TMPDIR &
+  node dist/server/modbus2mqtt.js -c $TMPDIR  -d $TMPDIR -s $TMPDIR &
   MPID=$!  
 fi
 wait $MPID

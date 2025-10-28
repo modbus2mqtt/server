@@ -1,8 +1,0 @@
-version: "0.1"
-files:
-  - url: __tests__/yaml-dir/local/specifications/files/test.pdf/specifications/files/waterleveltransmitter/test.pdf
-    fileLocation: 0
-    usage: doc
-  - url: specifications/files/waterleveltransmitter/test.pdf
-    fileLocation: 0
-    usage: doc

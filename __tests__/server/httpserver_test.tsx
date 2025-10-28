@@ -41,7 +41,7 @@ import { ConfigBus } from '../../src/server/configbus'
 import { MqttConnector } from '../../src/server/mqttconnector'
 import { MqttSubscriptions } from '../../src/server/mqttsubscriptions'
 import { ModbusAPI } from '../../src/server/modbusAPI'
-import { yamlDir } from './configsbase'
+import { setConfigsDirsForTest } from './configsbase'
 let mockReject = false
 let debug = Debug('testhttpserver')
 const mqttService = {
@@ -60,12 +60,11 @@ function executeHassioGetRequest<T>(_url: string, next: (_dev: T) => void, rejec
 }
 
 let log = new Logger('httpserverTest')
-ConfigSpecification.yamlDir = yamlDir
+setConfigsDirsForTest()
 new ConfigSpecification().readYaml()
-Config.sslDir = yamlDir
 Config['executeHassioGetRequest'] = executeHassioGetRequest
 let mWaterlevel = new Mutex()
-let testdir = yamlDir + '/local/specifications/files/waterleveltransmitter/'
+let testdir = ConfigSpecification.getLocalDir() + '/specifications/files/waterleveltransmitter/'
 let testPdf = 'test.pdf'
 let test1 = 'test2.jpg'
 
@@ -123,12 +122,11 @@ function mockedHttp(_options: any, cb: (res: any) => any) {
   cb({ statusCode: 200 })
 }
 let oldExecuteHassioGetRequest: any
-let lspec = yamlDir + '/local/specifications/'
+let lspec = ConfigSpecification.getLocalDir() + '/specifications/'
 
 const oldAuthenticate: (req: any, res: any, next: () => void) => void = HttpServer.prototype.authenticate
 beforeAll(() => {
   return new Promise<void>((resolve, reject) => {
-    Config['yamlDir'] = yamlDir
     let cfg = new Config()
     cfg.readYamlAsync().then(() => {
       ConfigBus.readBusses()
@@ -149,7 +147,7 @@ beforeAll(() => {
       HttpServer.prototype.authenticate = (req, res, next) => {
         next()
       }
-      httpServer = new HttpServer(join(yamlDir, 'angular'))
+      httpServer = new HttpServer(join(Config.configDir, 'angular'))
 
       httpServer.setModbusCacheAvailable()
       httpServer.init()
@@ -468,7 +466,7 @@ describe('http POST', () => {
 
     let spec1: ImodbusSpecification = Object.assign(spec)
 
-    let filename = yamlDir + '/local/specifications/waterleveltransmitter.yaml'
+    let filename = ConfigSpecification.getLocalDir() + '/specifications/waterleveltransmitter.yaml'
     fs.unlinkSync(ConfigSpecification['getSpecificationPath'](spec1))
     let url = apiUri.specfication + '?busid=0&slaveid=2&originalFilename=waterleveltransmitter'
 
@@ -554,7 +552,7 @@ describe('http POST', () => {
     mWaterlevel.runExclusive(() => {
       if (fs.existsSync(testdir + test)) fs.unlinkSync(testdir + test)
       if (fs.existsSync(testdir + test1)) fs.unlinkSync(testdir + test1)
-      let lspec = yamlDir + '/local/specifications/'
+      let lspec = ConfigSpecification.getLocalDir() + '/specifications/'
       if (!fs.existsSync(lspec + 'waterleveltransmitter.bck'))
         fs.copyFileSync(lspec + 'waterleveltransmitter.yaml', lspec + 'waterleveltransmitter.bck', undefined)
       supertest(httpServer['app'])

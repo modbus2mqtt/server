@@ -9,7 +9,7 @@ import { MqttConnector } from './mqttconnector'
 import { Ientity, ImodbusSpecification } from '../specification.shared'
 import { Converter } from '../specification'
 import { Observable } from 'rxjs'
-import { MqttClient } from 'mqtt/*'
+import { MqttClient } from 'mqtt'
 
 const debug = Debug('mqttsubscription')
 const log = new Logger('mqttsubscription')

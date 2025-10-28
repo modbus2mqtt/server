@@ -1,0 +1,8 @@
+version: "0.1"
+files:
+  - url: __tests__/server/config-dir/modbus2mqtt/specifications/files/test.pdf
+    fileLocation: 0
+    usage: doc
+  - url: specifications/files/waterleveltransmitter/test.pdf
+    fileLocation: 0
+    usage: doc

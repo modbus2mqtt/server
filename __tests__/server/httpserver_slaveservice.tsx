@@ -13,7 +13,7 @@ import { ConfigBus } from '../../src/server/configbus'
 import { Observable, Subject } from 'rxjs'
 import { initBussesForTest } from './configsbase'
 import { MqttSubscriptions } from '../../src/server/mqttsubscriptions'
-import { yamlDir } from './configsbase'
+import { setConfigsDirsForTest } from './configsbase'
 let mockReject = false
 let debug = Debug('testhttpserver')
 const mqttService = {
@@ -32,9 +32,8 @@ function executeHassioGetRequest<T>(_url: string, next: (_dev: T) => void, rejec
 }
 
 let log = new Logger('httpserverTest')
-ConfigSpecification.yamlDir = yamlDir
+setConfigsDirsForTest()
 new ConfigSpecification().readYaml()
-Config.sslDir = yamlDir
 Config['executeHassioGetRequest'] = executeHassioGetRequest
 
 var httpServer: HttpServer
@@ -51,7 +50,7 @@ let oldExecuteHassioGetRequest: any
 const oldAuthenticate: (req: any, res: any, next: () => void) => void = HttpServer.prototype.authenticate
 beforeAll(() => {
   return new Promise<void>((resolve, reject) => {
-    Config['yamlDir'] = yamlDir
+    setConfigsDirsForTest()
     let cfg = new Config()
     cfg.readYamlAsync().then(() => {
       ConfigBus.readBusses()
@@ -62,7 +61,7 @@ beforeAll(() => {
       HttpServer.prototype.authenticate = (req, res, next) => {
         next()
       }
-      httpServer = new HttpServer(join(yamlDir, 'angular'))
+      httpServer = new HttpServer(join(Config.configDir, 'angular'))
 
       httpServer.setModbusCacheAvailable()
       httpServer.init()
@@ -130,8 +129,6 @@ test('GET command Entity topic', (done) => {
   let mockDiscover = prepareMqttDiscover()
   ConfigBus.addSpecification(mockDiscover.slave['slave'])
   let spec = mockDiscover.slave.getSpecification()
-  let en: any = spec!.entities[2] as any
-  en.converter = { name: 'doesntmatter' }
   let url = '/' + mockDiscover.slave.getEntityCommandTopic(spec!.entities[2] as any)!.commandTopic
   url = url + '20.2'
   supertest(httpServer['app'])

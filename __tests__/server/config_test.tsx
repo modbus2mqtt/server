@@ -2,17 +2,17 @@ import { expect, it, test, afterAll, jest, beforeAll } from '@jest/globals'
 import { Config, MqttValidationResult } from '../../src/server/config'
 import { getFileNameFromName } from '../../src/specification.shared'
 import * as fs from 'fs'
-import { yamlDir } from './configsbase'
+import { setConfigsDirsForTest } from './configsbase'
 import { ImqttClient, AuthenticationErrors } from '../../src/server.shared'
 import AdmZip from 'adm-zip'
 import Debug from 'debug'
 import exp from 'constants'
-Config['yamlDir'] = yamlDir
-Config['sslDir'] = yamlDir
+setConfigsDirsForTest()
 let debug = Debug('config_test')
 beforeAll(() => {
   return new Promise<void>((resolve, reject) => {
     const config = new Config()
+    fs.copyFileSync(Config.getLocalDir() + "/secrets.yaml",Config.getLocalDir() + "/secrets.yaml.bck")
     config.readYamlAsync().then(() => {
       let cfg = Config.getConfiguration()
       Config.tokenExpiryTime = 2000
@@ -33,6 +33,8 @@ afterAll(() => {
   let cfg = Config.getConfiguration()
   cfg.noAuthentication = false
   new Config().writeConfiguration(cfg)
+  fs.copyFileSync(Config.getLocalDir() + "/secrets.yaml.bck",Config.getLocalDir() + "/secrets.yaml")
+  fs.unlinkSync(Config.getLocalDir() + "/secrets.yaml.bck");
 })
 test('register/login/validate', (done) => {
   const config = new Config()
@@ -79,14 +81,14 @@ it('writeConfiguration change password ', () => {
   cr.writeConfiguration(cfg)
   expect(Config['config'].mqttconnect.password).toBe('testpassword')
   expect(cfg.mqttconnect.password).toBe('testpassword') // from secrets.yaml
-  let cfgStr = fs.readFileSync(yamlDir + '/local/modbus2mqtt.yaml').toString()
+  let cfgStr = fs.readFileSync(Config.getLocalDir() + '/modbus2mqtt.yaml').toString()
   expect(cfgStr).toContain('!secret ')
   cfg.mqttconnect.password = oldpassword
   cr.writeConfiguration(cfg)
   expect(Config['config'].mqttconnect.password).toBe(oldpassword)
-  cfgStr = fs.readFileSync(yamlDir + '/local/modbus2mqtt.yaml').toString()
+  cfgStr = fs.readFileSync(Config.getLocalDir() + '/modbus2mqtt.yaml').toString()
   expect(cfgStr).toContain('!secret ')
-  let secretsStr = fs.readFileSync(yamlDir + '/local/secrets.yaml').toString()
+  let secretsStr = fs.readFileSync(Config.getLocalDir() + '/secrets.yaml').toString()
   expect(secretsStr).toContain(oldpassword)
 })
 

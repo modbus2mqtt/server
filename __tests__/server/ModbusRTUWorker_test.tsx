@@ -1,10 +1,8 @@
 import { describe, expect, it } from '@jest/globals'
 import { ModbusRTUWorker } from '../../src/server/modbusRTUworker'
 import { IModbusAPI } from '../../src/server/modbusWorker'
-import { IModbusResultWithDuration } from '../../src/server/bus'
 import { IQueueEntry, ModbusErrorActions, ModbusRTUQueue } from '../../src/server/modbusRTUqueue'
 import { ModbusRegisterType } from '../../src/specification.shared'
-import { ReadRegisterResult } from 'modbus-serial/ModbusRTU'
 import { ModbusTasks } from '../../src/server.shared'
 import { Itest, ModbusRTUWorkerForTest, FakeBus } from './testhelper'
 

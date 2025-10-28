@@ -2,7 +2,7 @@ import { expect, it, beforeAll, afterAll } from '@jest/globals'
 import { startModbusTCPserver, stopModbusTCPServer } from '../../src/server/modbusTCPserver'
 
 import { HttpErrorsEnum, ImodbusSpecification } from '../../src/specification.shared'
-import { FakeMqtt, FakeModes, backendTCPDir, yamlDir, initBussesForTest } from './configsbase'
+import { FakeMqtt, FakeModes, setConfigsDirsBackendTCPForTest, initBussesForTest } from './configsbase'
 import supertest from 'supertest'
 import { apiUri } from '../../src/server.shared'
 import { HttpServer } from '../../src/server/httpserver'
@@ -18,7 +18,8 @@ var httpServer: HttpServer
 beforeAll(() => {
   return new Promise<void>((resolve, reject) => {
     // fake MQTT: avoid reconnect
-
+    setConfigsDirsBackendTCPForTest()
+    
     let conn = new MqttConnector()
     let msub = new MqttSubscriptions(conn)
 
@@ -26,9 +27,6 @@ beforeAll(() => {
     conn.getMqttClient = function (onConnectCallback: (connection: MqttClient) => void) {
       onConnectCallback(fake as any as MqttClient)
     }
-    Config['yamlDir'] = backendTCPDir
-    Config['sslDir'] = backendTCPDir
-    ConfigSpecification.yamlDir = backendTCPDir
     new ConfigSpecification().readYaml()
     let cfg = new Config()
     cfg.readYamlAsync().then(() => {
@@ -37,9 +35,9 @@ beforeAll(() => {
       HttpServer.prototype.authenticate = (req, res, next) => {
         next()
       }
-      startModbusTCPserver(ConfigSpecification.yamlDir, 0)
+      startModbusTCPserver(ConfigSpecification.configDir, ConfigSpecification.dataDir, 0)
 
-      httpServer = new HttpServer(join(yamlDir, 'angular'))
+      httpServer = new HttpServer(join(ConfigSpecification.configDir, 'angular'))
       httpServer.setModbusCacheAvailable()
       httpServer.init()
       resolve()

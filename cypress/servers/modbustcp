@@ -1,0 +1,13 @@
+#!/bin/sh 
+set -e
+TMPDIR=`mktemp -d -t modbustcpXXXXX`
+export TMPDIR
+export MPID=$$
+localhost="127.0.0.1"
+trap 'echo signal 15 $MPID $TMPDIR; rm -rf $TMPDIR; kill -15 $MPID; exit 1' 15
+trap 'echo signal 2 $MPID $TMPDIR; rm -rf $TMPDIR; kill -2 $MPID; exit 1;' 2
+mkdir -p $TMPDIR/modbustcp
+echo "TMPDIR=$TMPDIR"
+node ./dist/server/runModbusTCPserver.js -d $TMPDIR -c ./cypress/servers/modbustcp.conf/config-dir --busid 0 &
+MPID=$!  
+wait $MPID

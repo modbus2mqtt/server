@@ -1,0 +1,87 @@
+filename: waterleveltransmitter
+entities:
+  - id: 1
+    mqttname: waterleveltransmitter
+    converter:
+      name: number
+      registerTypes: []
+    modbusAddress: 3
+    registerType: 3
+    readonly: true
+    converterParameters:
+      multiplier: 0.01
+  - id: 2
+    mqttname: ''
+    converter:
+      name: number
+      registerTypes: []
+    modbusAddress: 4
+    registerType: 3
+    readonly: true
+    converterParameters:
+      multiplier: 0.01
+    variableConfiguration:
+      targetParameter: 2
+      entityId: 1
+  - id: 3
+    modbusAddress: 4
+    converter:
+      name: number
+      registerTypes:
+        - 3
+        - 4
+    converterParameters:
+      multiplier: 1
+      offset: 0
+      numberFormat: 0
+      identification:
+        min: 31
+        max: 70
+      uom: °C
+    mqttname: hotwatertargettemperature
+    valid: true
+    registerType: 3
+    readonly: false
+    modbusError: ''
+  - id: 4
+    registerType: 3
+    readonly: false
+    converter:
+      name: select
+    modbusAddress: 5
+    converterParameters:
+      optionModbusValues:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      options: []
+    valid: false
+    mqttname: operatingmode
+i18n:
+  - lang: en
+    texts:
+      - textId: name
+        text: Water Level Transmitter
+      - textId: e1
+        text: Water Level Transmitter
+      - textId: e3
+        text: Hot Water Target Temperature
+      - textId: e4
+        text: Operating Mode
+      - textId: e4o.0
+        text: Sommer
+      - textId: e4o.1
+        text: Winter
+      - textId: e4o.2
+        text: Urlaub
+      - textId: e4o.3
+        text: Party
+      - textId: e4o.4
+        text: 2nd Heating
+      - textId: e4o.5
+        text: Cooling
+version: '0.3'
+testdata: {}

@@ -1,10 +1,9 @@
-import { it, expect, describe, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals'
+import { it, expect, describe, beforeAll, afterAll } from '@jest/globals'
 import { ModbusTcpRtuBridge } from '../../src/server/tcprtubridge'
 import { ModbusRTUQueue } from '../../src/server/modbusRTUqueue'
 import { ModbusRegisterType } from '../../src/specification.shared'
 import { FakeBus, ModbusRTUWorkerForTest } from './testhelper'
 import ModbusRTU from 'modbus-serial'
-import exp from 'constants'
 import { Mutex } from 'async-mutex'
 
 it('getCoil', () => {

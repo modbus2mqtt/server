@@ -46,7 +46,7 @@ export class ConfigBus {
 
   static readBusses() {
     ConfigBus.busses = []
-    let busDir = Config.yamlDir + '/local/busses'
+    let busDir = Config.getLocalDir() + '/busses'
     let oneBusFound = false
     if (fs.existsSync(busDir)) {
       let busDirs: fs.Dirent[] = fs.readdirSync(busDir, {
@@ -68,11 +68,11 @@ export class ConfigBus {
                 connectionData: connectionData,
                 slaves: [],
               })
-              let devFiles: string[] = fs.readdirSync(Config.yamlDir + '/local/busses/' + de.name)
+              let devFiles: string[] = fs.readdirSync(Config.getLocalDir() + '/busses/' + de.name)
 
               devFiles.forEach(function (file: string) {
                 if (file.endsWith('.yaml') && file !== 'bus.yaml') {
-                  var src: string = fs.readFileSync(Config.yamlDir + '/local/busses/' + de.name + '/' + file, {
+                  var src: string = fs.readFileSync(Config.getLocalDir() + '/busses/' + de.name + '/' + file, {
                     encoding: 'utf8',
                   })
                   var o: Islave = parse(src)
@@ -115,7 +115,7 @@ export class ConfigBus {
         connectionData: connection,
         slaves: [],
       }) - 1
-    let busDir = Config.yamlDir + '/local/busses/bus.' + maxBusId
+    let busDir = Config.getLocalDir() + '/busses/bus.' + maxBusId
     if (!fs.existsSync(busDir)) {
       fs.mkdirSync(busDir, { recursive: true })
       debug('creating slaves path: ' + busDir)
@@ -126,7 +126,7 @@ export class ConfigBus {
   }
   static updateBusProperties(bus: IBus, connection: IModbusConnection): IBus {
     bus.connectionData = connection
-    let busDir = Config.yamlDir + '/local/busses/bus.' + bus.busId
+    let busDir = Config.getLocalDir() + '/busses/bus.' + bus.busId
     if (!fs.existsSync(busDir)) {
       fs.mkdirSync(busDir, { recursive: true })
       debug('creating slaves path: ' + busDir)
@@ -139,7 +139,7 @@ export class ConfigBus {
     let idx = ConfigBus.busses.findIndex((b) => b.busId == busid)
     if (idx >= 0) {
       ConfigBus.emitBusEvent(ConfigListenerEvent.deleteBus, busid)
-      let busDir = Config.yamlDir + '/local/busses/bus.' + busid
+      let busDir = Config.getLocalDir() + '/busses/bus.' + busid
       ConfigBus.busses.splice(idx, 1)
       fs.rmSync(busDir, { recursive: true })
     }
@@ -153,7 +153,7 @@ export class ConfigBus {
     return addresses
   }
   private static getslavePath(busid: number, slave: Islave): string {
-    return Config.yamlDir + '/local/busses/bus.' + busid + '/s' + slave.slaveid + '.yaml'
+    return Config.getLocalDir() + '/busses/bus.' + busid + '/s' + slave.slaveid + '.yaml'
   }
   static getIdentityEntities(spec: Ispecification, language?: string): IidentEntity[] {
     return spec.entities.map((se) => {

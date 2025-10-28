@@ -1,6 +1,5 @@
-import { jest, expect, it } from '@jest/globals'
+import { expect, it } from '@jest/globals'
 import { ModbusRegisterType } from '../../src/specification.shared'
-import test from 'node:test'
 import { ModbusRTUProcessor } from '../../src/server/modbusRTUprocessor'
 import { IQueueEntry, ModbusErrorActions, ModbusRTUQueue } from '../../src/server/modbusRTUqueue'
 import { ImodbusAddress, ModbusTasks } from '../../src/server.shared'

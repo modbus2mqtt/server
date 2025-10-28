@@ -14,15 +14,13 @@ import {
 } from '../../src/specification.shared'
 import { Modbus, ModbusForTest } from '../../src/server/modbus'
 import { getReadRegisterResult } from '../../src/server/submitRequestMock'
-import { initBussesForTest, yamlDir } from './configsbase'
+import { initBussesForTest, setConfigsDirsForTest } from './configsbase'
 import { Islave, ModbusTasks } from '../../src/server.shared'
 import { ConfigSpecification, IfileSpecification, emptyModbusValues } from '../../src/specification'
 import { expect, xit, it, describe, beforeEach, jest, beforeAll } from '@jest/globals'
 import Debug from 'debug'
 import { ConfigBus } from '../../src/server/configbus'
-Config['yamlDir'] = yamlDir
-Config.sslDir = yamlDir
-ConfigSpecification.yamlDir = yamlDir
+setConfigsDirsForTest()
 let debug = Debug('modbus_test')
 
 beforeAll(() => {

@@ -9,7 +9,7 @@ import { ItopicAndPayloads, MqttDiscover } from '../../src/server/mqttdiscover'
 import {
   MqttClient,
 } from 'mqtt'
-import { FakeModes, FakeMqtt, initBussesForTest, yamlDir } from './configsbase'
+import { FakeModes, FakeMqtt, initBussesForTest,setConfigsDirsForTest } from './configsbase'
 import { Bus } from '../../src/server/bus'
 import Debug from 'debug'
 import { ConfigSpecification, Logger } from '../../src/specification'
@@ -79,10 +79,9 @@ let selectTestWritable: ImodbusEntity = {
 beforeAll((done) => {
   // Fix ModbusCache ModbusCache.prototype.submitGetHoldingRegisterRequest = submitGetHoldingRegisterRequest
   oldLog = Logger.prototype.log
-  Config['yamlDir'] = yamlDir
+  setConfigsDirsForTest()
   Config['config'] = {} as any
-  ConfigSpecification.yamlDir = yamlDir
-  Config.sslDir = yamlDir
+
   let conn = new MqttConnector()
   msub1 = new MqttSubscriptions(conn)
   // trigger subscription to ConfigBus Events

@@ -18,18 +18,29 @@ declare global {
 }
 
 let cli = new Command()
-let yamlDir = './validate-yaml'
 cli.version(SPECIFICATION_VERSION)
 cli.usage('[--yaml <yaml-dir>] [--pr_number <pull request number>')
+cli.usage('--config <config-dir> --data <data-dir> [--pr_number <pull request number>]')
+cli.option('-c, --config <config-dir>', 'set directory for add on configuration')
+cli.option('-d, --data <data-dir>', 'set directory for persistent data (public specifications)')
+
 cli.option('-p, --pr_number <number>', 'pr_number of commit which triggered the pull request')
 cli.option('-o, --pr_owner <owner>', 'Creator of the pull request')
 cli.parse(process.argv)
 let pr_number: number | undefined
 let pr_owner: string | undefined
 let options = cli.opts()
-if (options['yaml']) {
-  yamlDir = options['yaml']
-} else yamlDir = '.'
+if (options['config']) {
+  
+  ConfigSpecification.configDir = options['config']
+} else {
+  ConfigSpecification.configDir = '.'
+}
+if (options['data']) {
+  ConfigSpecification.dataDir = options['data']
+} else {
+  ConfigSpecification.dataDir = '.'
+}
 
 if (options['pr_number']) {
   pr_number = Number.parseInt(options['pr_number'])
@@ -37,9 +48,6 @@ if (options['pr_number']) {
 if (options['pr_owner']) {
   pr_owner = options['pr_owner']
 }
-
-ConfigSpecification.yamlDir = yamlDir
-
 let log = new Logger('validate')
 
 function logAndExit(e: any) {
@@ -50,7 +58,8 @@ function logAndExit(e: any) {
 }
 
 function validate() {
-  if (!fs.existsSync(yamlDir)) fs.mkdirSync(yamlDir, { recursive: true })
+  if (!fs.existsSync(ConfigSpecification.configDir)) fs.mkdirSync(ConfigSpecification.configDir, { recursive: true })
+  if (!fs.existsSync(ConfigSpecification.dataDir)) fs.mkdirSync(ConfigSpecification.dataDir, { recursive: true })
 
   if (pr_number == undefined) {
     log.log(LogLevelEnum.error, 'No Pull Request number passed in command line')
@@ -69,7 +78,6 @@ function validate() {
   gh.listPullRequestFiles(pr_owner, pr_number)
     .then((data) => {
       let pr_number = data.pr_number
-      ConfigSpecification.yamlDir = yamlDir
       let s = new ConfigSpecification()
       s.readYaml()
       let messages: Imessage[] = []

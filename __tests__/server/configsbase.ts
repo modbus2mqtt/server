@@ -7,8 +7,10 @@ import { Bus } from '../../src/server/bus'
 import { MqttSubscriptions } from '../../src/server/mqttsubscriptions'
 import { ConfigSpecification } from '../../src/specification'
 
-export const yamlDir = '__tests__/server/yaml-dir'
-export const backendTCPDir = '__tests__/server/backendTCP'
+const configDir = '__tests__/server/config-dir'
+const dataDir = '__tests__/server/data-dir'
+const backendTCPConfigDir = '__tests__/server/backendTCP/config-dir'
+const backendTCPDataDir = '__tests__/server/backendTCP/data-dir'
 export let singleMutex = new Mutex()
 export enum FakeModes {
   Poll,
@@ -16,7 +18,18 @@ export enum FakeModes {
   Discovery,
 }
 let debug = Debug('configsbase')
-
+export function setConfigsDirsForTest():void{
+  ConfigSpecification.configDir = configDir
+  ConfigSpecification.dataDir = dataDir
+  Config.configDir = configDir
+  Config.sslDir = configDir
+}
+export function setConfigsDirsBackendTCPForTest(){
+    ConfigSpecification.configDir = backendTCPConfigDir
+  ConfigSpecification.dataDir = backendTCPDataDir
+  Config.configDir = backendTCPConfigDir
+  Config.sslDir = backendTCPConfigDir
+}
 export class FakeMqtt {
   disconnected = false
   connected = true

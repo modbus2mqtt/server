@@ -4,7 +4,7 @@ const config: Config = {
   verbose: true,
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: [ '__tests__/server', '__tests__/specification','<rootDir>/testHelpers'],
+  roots: [ '__tests__/server', '__tests__/specification'],
   transform: {
     '^.+\\.tsx+$': 'ts-jest',
   },

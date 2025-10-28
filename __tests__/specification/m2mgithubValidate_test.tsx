@@ -3,6 +3,7 @@ import { M2mGithubValidate } from '../../src/specification/m2mGithubValidate'
 import { ConfigSpecification } from '../../src/specification'
 import { it, expect, beforeAll, afterAll } from '@jest/globals'
 import * as fs from 'fs'
+import { configDir } from './configsbase'
 const debug = Debug('m2mgithubvalidate')
 
 let yamlDir = '__tests__/yamlDirValidate'
@@ -16,7 +17,7 @@ declare global {
 }
 
 Debug.enable('m2mgithubvalidate')
-ConfigSpecification['yamlDir'] = yamlDir
+ConfigSpecification['configDir'] = configDir
 beforeAll(() => {
   fs.rmSync(yamlDir, { recursive: true, force: true })
   fs.mkdirSync(yamlDir)

@@ -1,9 +1,10 @@
 import { expect, it } from '@jest/globals'
 import { ConfigSpecification } from '../../src/specification'
-import { yamlDir } from './configsbase'
+import { configDir, dataDir } from './configsbase'
 import { SPECIFICATION_VERSION } from '../../src/specification.shared'
 
-ConfigSpecification['yamlDir'] = yamlDir
+ConfigSpecification['configDir'] = configDir
+ConfigSpecification['dataDir'] = dataDir
 
 it('check device type status', () => {
   const configSpec = new ConfigSpecification()

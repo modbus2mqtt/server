@@ -1,7 +1,7 @@
 import { FCallbackVal, IServiceVector, ServerTCP } from 'modbus-serial'
 import Debug from 'debug'
 import { ModbusRegisterType } from '../specification.shared'
-import { IfileSpecification, LogLevelEnum, Logger, M2mGitHub, Migrator } from '../specification'
+import { ConfigSpecification, IfileSpecification, LogLevelEnum, Logger, M2mGitHub, Migrator } from '../specification'
 import { IModbusConnection, ITCPConnection } from '../server.shared'
 import { VERSION } from 'ts-node'
 import * as fs from 'fs'
@@ -243,17 +243,17 @@ process.on('SIGINT', () => {
 export function stopModbusTCPServer() {
   if (server) server.stopServer()
 }
-export function startModbusTCPserver(yamlDir: string, busId: number) {
+export function startModbusTCPserver(configDir: string,dataDir:string, busId: number) {
   debug('starting')
   if (process.pid) log.log(LogLevelEnum.notice, 'PROCESSID=' + process.pid)
-  let gh = new M2mGitHub(null, join(yamlDir, 'public'))
+  let gh = new M2mGitHub(null, ConfigSpecification.getPublicDir())
   gh.init()
     .then(() => {
       let port = 502
       clearRegisterValues()
-      let directoryBus = join(yamlDir, 'local/busses/bus.' + busId)
-      let directoryPublicSpecs = join(yamlDir, 'public/specifications')
-      let directoryLocalSpecs = join(yamlDir, 'local/specifications')
+      let directoryBus = ConfigSpecification.getLocalDir() + '/busses/bus.' + busId
+      let directoryPublicSpecs = ConfigSpecification.getPublicDir() + '/specifications'
+      let directoryLocalSpecs = ConfigSpecification.getLocalDir() + '/specifications'
       if (!fs.existsSync(directoryBus)) {
         log.log(LogLevelEnum.error, 'Unable to start TCP server: Bus directory not found ' + directoryBus)
         return

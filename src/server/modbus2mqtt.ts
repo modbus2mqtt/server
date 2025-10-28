@@ -54,16 +54,24 @@ export class Modbus2Mqtt {
     cli.version(VERSION)
     cli.usage('[--ssl <ssl-dir>][--yaml <yaml-dir>][ --port <TCP port>] --term <exit code for SIGTERM>')
     cli.option('-s, --ssl <ssl-dir>', 'set directory for certificates')
-    cli.option('-y, --yaml <yaml-dir>', 'set directory for add on configuration')
+    cli.option('-c, --config <config-dir>', 'set directory for add on configuration')
+    cli.option('-d, --data <data-dir>', 'set directory for persistent data (public specifications)')
     cli.option('--term <exit code for SIGTERM>', 'sets exit code in case of SIGTERM')
     cli.parse(process.argv)
     let options = cli.opts()
-    if (options['yaml']) {
-      Config.yamlDir = options['yaml']
-      ConfigSpecification.yamlDir = options['yaml']
+    if (options['data']) {
+      Config.dataDir = options['data']
+      ConfigSpecification.dataDir = options['data']
     } else {
-      Config.yamlDir = '.'
-      ConfigSpecification.yamlDir = '.'
+      Config.dataDir = '.'
+      ConfigSpecification.dataDir = '.'
+    }
+    if (options['config']) {
+      Config.configDir = options['config']
+      ConfigSpecification.configDir = options['config']
+    } else {
+      Config.configDir = '.'
+      ConfigSpecification.configDir = '.'
     }
     if (options['term'])
       process.on('SIGTERM', () => {
@@ -97,7 +105,7 @@ export class Modbus2Mqtt {
         debug('http root : ' + angulardir)
         let gh = new M2mGitHub(
           Config.getConfiguration().githubPersonalToken ? Config.getConfiguration().githubPersonalToken! : null,
-          join(ConfigSpecification.yamlDir, 'public')
+          ConfigSpecification.getPublicDir()
         )
         let startServer = () => {
           MqttDiscover.getInstance()

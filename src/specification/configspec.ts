@@ -44,29 +44,32 @@ export class ConfigSpecification {
   static mqttdiscoverylanguage: string | undefined
   static githubPersonalToken: string | undefined
   static getPublicDir(): string {
-    return join(ConfigSpecification.yamlDir, 'public')
+    return join(ConfigSpecification.dataDir, 'public')
   }
   static getLocalDir(): string {
-    return join(ConfigSpecification.yamlDir, 'local')
+    return join(ConfigSpecification.configDir, 'modbus2mqtt')
+  }
+  static getContributedDir(): string {
+    return join(ConfigSpecification.dataDir, 'contributed')
   }
   constructor() {}
   private static getPublicSpecificationPath(spec: IbaseSpecification): string {
-    return ConfigSpecification.yamlDir + '/public/specifications/' + spec.filename + '.yaml'
+    return ConfigSpecification.getPublicDir() + '/specifications/' + spec.filename + '.yaml'
   }
   private static getContributedSpecificationPath(spec: IbaseSpecification): string {
-    return ConfigSpecification.yamlDir + '/contributed/specifications/' + spec.filename + '.yaml'
+    return ConfigSpecification.getContributedDir() + '/specifications/' + spec.filename + '.yaml'
   }
   private static getSpecificationPath(spec: IbaseSpecification): string {
-    return ConfigSpecification.yamlDir + '/local/specifications/' + spec.filename + '.yaml'
+    return ConfigSpecification.getLocalDir() + '/specifications/' + spec.filename + '.yaml'
   }
   private static getLocalFilesPath(specfilename: string): string {
-    return join(ConfigSpecification.yamlDir, getSpecificationImageOrDocumentUrl('local', specfilename, ''))
+    return join(ConfigSpecification.getLocalDir(), getSpecificationImageOrDocumentUrl('', specfilename, ''))
   }
   private static getPublicFilesPath(specfilename: string): string {
-    return join(ConfigSpecification.yamlDir, getSpecificationImageOrDocumentUrl('public', specfilename, ''))
+    return join(ConfigSpecification.getPublicDir(), getSpecificationImageOrDocumentUrl('', specfilename, ''))
   }
   private static getContributedFilesPath(specfilename: string): string {
-    return join(ConfigSpecification.yamlDir, getSpecificationImageOrDocumentUrl('contributed', specfilename, ''))
+    return join(ConfigSpecification.getContributedDir(), getSpecificationImageOrDocumentUrl('', specfilename, ''))
   }
   appendSpecificationUrls(specfilename: string, urls: IimageAndDocumentUrl[]): Promise<IimageAndDocumentUrl[] | undefined> {
     let filesPath = ConfigSpecification.getLocalFilesPath(specfilename)
@@ -121,7 +124,8 @@ export class ConfigSpecification {
 
   private static specifications: IfileSpecification[] = []
 
-  static yamlDir: string = ''
+  static dataDir: string = ''
+  static configDir: string = ''
 
   private readFilesYaml(directory: string, spec: IfileSpecification) {
     let fp = join(directory, 'files', spec.filename, 'files.yaml')
@@ -187,15 +191,14 @@ export class ConfigSpecification {
 
   // set the base file for relative includes
   readYaml(): void {
-    debugger
     try {
       var publishedSpecifications: IfileSpecification[] = this.readspecifications(
-        ConfigSpecification.yamlDir + '/public/specifications'
+        ConfigSpecification.getPublicDir() + '/specifications'
       )
       var contributedSpecifications: IfileSpecification[] = this.readspecifications(
-        ConfigSpecification.yamlDir + '/contributed/specifications'
+        ConfigSpecification.getContributedDir() + '/specifications'
       )
-      ConfigSpecification.specifications = this.readspecifications(ConfigSpecification.yamlDir + '/local/specifications')
+      ConfigSpecification.specifications = this.readspecifications(ConfigSpecification.getLocalDir() + '/specifications')
       // Iterate over local files
       ConfigSpecification.specifications.forEach((specification: IfileSpecification) => {
         let published = publishedSpecifications.find((obj) => {
@@ -317,7 +320,7 @@ export class ConfigSpecification {
     let fname = getBaseFilename(url)
     let decodedUrl = decodeURIComponent(url).replaceAll('+', ' ')
     let deleteFlag: boolean = true
-    let yamlFile = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, 'local'), specfilename, 'files.yaml')
+    let yamlFile = getSpecificationImageOrDocumentUrl(ConfigSpecification.getLocalDir(), specfilename, 'files.yaml')
     let files: IimageAndDocumentFilesType = { version: SPECIFICATION_FILES_VERSION, files: [] }
     if (fs.existsSync(yamlFile)) {
       try {
@@ -346,17 +349,17 @@ export class ConfigSpecification {
         log.log(LogLevelEnum.error, 'Unable to read Files directory for ' + specfilename)
       }
     }
-    specfilename = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, 'local'), specfilename, fname)
+    specfilename = getSpecificationImageOrDocumentUrl(ConfigSpecification.getLocalDir(), specfilename, fname)
     if (fs.existsSync(specfilename) && deleteFlag) fs.unlinkSync(specfilename)
     return files.files
   }
 
   private renameFilesPath(spec: IfileSpecification, oldfilename: string, newDirectory: string) {
-    let oldDirectory = 'local'
-    if (spec.status == SpecificationStatus.contributed) oldDirectory = 'contributed'
-    let specsDir = join(ConfigSpecification.yamlDir, newDirectory, 'specifications')
-    let oldPath = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, oldDirectory), oldfilename, '')
-    let newPath = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, newDirectory), spec.filename, '')
+    let oldDirectory = ConfigSpecification.getLocalDir()
+    if (spec.status == SpecificationStatus.contributed) oldDirectory = ConfigSpecification.getContributedDir()
+    let specsDir = join( newDirectory, 'specifications')
+    let oldPath = getSpecificationImageOrDocumentUrl( oldDirectory, oldfilename, '')
+    let newPath = getSpecificationImageOrDocumentUrl(join( newDirectory), spec.filename, '')
     let newParentDir = path.dirname(newPath)
     if (!fs.existsSync(newParentDir)) fs.mkdirSync(newParentDir, { recursive: true })
     if (fs.existsSync(newPath)) fs.rmSync(newPath, { recursive: true })
@@ -393,12 +396,12 @@ export class ConfigSpecification {
     if (newStatus && newStatus == spec.status) return
     let newPath = ConfigSpecification.getContributedSpecificationPath(spec)
     let oldPath = ConfigSpecification.getSpecificationPath(spec)
-    let newDirectory = 'contributed'
+    let newDirectory = ConfigSpecification.getContributedDir()
     switch (newStatus) {
       case SpecificationStatus.published:
         oldPath = ConfigSpecification.getContributedSpecificationPath(spec)
         newPath = ConfigSpecification.getPublicSpecificationPath(spec)
-        newDirectory = 'public'
+        newDirectory = ConfigSpecification.getPublicDir()
         break
       case SpecificationStatus.cloned:
       case SpecificationStatus.added:
@@ -407,7 +410,7 @@ export class ConfigSpecification {
           if (fs.existsSync(publicPath)) newStatus = SpecificationStatus.cloned
           else newStatus = SpecificationStatus.added
           newPath = ConfigSpecification.getSpecificationPath(spec)
-          newDirectory = 'local'
+          newDirectory = ConfigSpecification.getLocalDir()
           oldPath = ConfigSpecification.getContributedSpecificationPath(spec)
         }
         break
@@ -416,7 +419,7 @@ export class ConfigSpecification {
     }
     // first move files, because spec.status must point to oldPath directory before calling it
     // move spec file from oldpath to newpath
-    if (newDirectory != 'public') {
+    if (newDirectory != ConfigSpecification.getPublicDir()) {
       this.renameFilesPath(spec, spec.filename, newDirectory)
       fs.renameSync(oldPath, newPath)
     } else {
@@ -447,7 +450,7 @@ export class ConfigSpecification {
     let filename = ConfigSpecification.getSpecificationPath(spec)
     if (spec) {
       if (spec.status == SpecificationStatus.new) {
-        this.renameFilesPath(spec, '_new', 'local')
+        this.renameFilesPath(spec, '_new', ConfigSpecification.getLocalDir())
       } else if (originalFilename) {
         if (originalFilename != spec.filename) {
           if (
@@ -462,7 +465,7 @@ export class ConfigSpecification {
           let originalFilepath = ConfigSpecification.getSpecificationPath(spec)
           spec.filename = s
           fs.unlinkSync(originalFilepath)
-          this.renameFilesPath(spec, originalFilename, 'local')
+          this.renameFilesPath(spec, originalFilename, ConfigSpecification.getLocalDir())
         }
       } else throw new Error(spec.status + ' !=' + SpecificationStatus.new + ' and no originalfilename')
       if (spec.files && spec.files.length && [SpecificationStatus.published].includes(spec.status)) {
@@ -513,7 +516,7 @@ export class ConfigSpecification {
     return fileSpec
   }
   deleteNewSpecificationFiles() {
-    let dir = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, 'local'), '_new', '')
+    let dir = getSpecificationImageOrDocumentUrl(ConfigSpecification.getLocalDir(), '_new', '')
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true })
   }
   deleteSpecification(specfileName: string) {
@@ -571,11 +574,11 @@ export class ConfigSpecification {
         filename: '_new',
         status: SpecificationStatus.new,
       }
-      let dir = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, 'local'), '_new', '')
+      let dir = getSpecificationImageOrDocumentUrl(ConfigSpecification.getLocalDir(), '_new', '')
       if (fs.existsSync(dir)) {
         let files = fs.readdirSync(dir)
         files.forEach((file) => {
-          let url = getSpecificationImageOrDocumentUrl(join(ConfigSpecification.yamlDir, 'local'), '_new', file)
+          let url = getSpecificationImageOrDocumentUrl(ConfigSpecification.getLocalDir(), '_new', file)
           rc.files.push({
             url: url,
             fileLocation: FileLocation.Local,
@@ -663,7 +666,7 @@ export class ConfigSpecification {
 export function getSpecificationImageOrDocumentUrl(rootUrl: string | undefined, specName: string, url: string): string {
   let fn = getBaseFilename(url)
   let rc: string = ''
-  if (rootUrl) {
+  if (rootUrl && rootUrl.length > 0 ) {
     let append = '/'
     if (rootUrl.endsWith('/')) append = ''
     rc = rootUrl + append + join(filesUrlPrefix, specName, fn)

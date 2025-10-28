@@ -2,7 +2,7 @@ import Debug from 'debug'
 import { expect, it, describe, beforeAll, jest } from '@jest/globals'
 import { Config } from '../../src/server/config'
 import { Bus } from '../../src/server/bus'
-import { initBussesForTest, yamlDir } from './configsbase'
+import { initBussesForTest, setConfigsDirsForTest } from './configsbase'
 import { ModbusServer, XYslaveid } from '../../src/server/modbusTCPserver'
 import { IdentifiedStates, ImodbusEntity, ImodbusSpecification } from '../../src/specification.shared'
 import {
@@ -13,23 +13,18 @@ import {
   LogLevelEnum,
 } from '../../src/specification'
 import { singleMutex } from './configsbase'
-import { Iconfiguration, PollModes } from '../../src/server.shared'
-import { ConfigBus } from '../../src/server/configbus'
-import { IModbusAPI } from '../../src/server/modbusWorker'
 import { ModbusAPI } from '../../src/server/modbusAPI'
-import { Modbus } from '../../src/server/modbus'
 
 const debug = Debug('bustest')
 const testPort = 8888
-Config['yamlDir'] = yamlDir
-ConfigSpecification.yamlDir = yamlDir
-Config['sslDir'] = yamlDir
+setConfigsDirsForTest()
+
 
 beforeAll(() => {
   jest.restoreAllMocks()
   jest.clearAllMocks()
   initBussesForTest()
-  Config['yamlDir'] = yamlDir
+  setConfigsDirsForTest()
   new ConfigSpecification().readYaml()
   return new Promise<void>((resolve, reject) => {
     new Config()

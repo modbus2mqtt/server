@@ -3,30 +3,30 @@ export DONE=0
 while [ $DONE -eq 0 ]
 do
 DONE=1
-netstat -pl | grep -e ":3001" -e ":3003" -e ":3004" -e ":3005" | sed -e 's/.*\s\([0-9]*\)\/\(.*\)/\1 \2/g' | sort -u| while read PID NAME
+lsof -i -P -u "$(id -u)" 2>/dev/null|grep LISTEN | grep -e ":3001" -e ":3003" -e ":3004" -e ":3005" | awk '{print $2, $1, $3}'| sort -u| while read PID NAME USER
 do
   DONE=0
   # kills the parent with signal 2 if possible. Otherwise the normal process
-  if [ $PID -gt 0  ]
+  if [ "$PID" -gt 0  ]
   then
-     PPID=`ps -p $PID -o "ppid="`
-     OWNER=`ps -p $PID -o "uid="`
-     POWNER=`ps -p $PPID -o "uid="`
-     if [ "$POWNER" -eq `id -u` ]
+     PAPID=$(ps -p "$PID" -o "ppid=")
+     OWNER=$(ps -p "$PID" -o "uid=")
+     POWNER=$(ps -p "$PPID" -o "uid=")
+     if [ "$POWNER" -eq "$(id -u)" ]
      then
-        kill -2 $PPID
-        echo killed SIGINT $NAME 1>&2
+        kill -2 "$PAPID"
+        echo killed SIGINT "$NAME" 1>&2
         sleep 0.1
-        kill $PID        
+        kill "$PID"        
      else
-       if [ $OWNER -eq `id -u` ]
+       if [ "$OWNER" -eq "$(id -u)" ]
        then
-        kill $PID
-        echo killed SIGTERM $NAME 1>&2
+        kill "$PID"
+        echo killed SIGTERM "$NAME" 1>&2
        fi
      fi
   fi
 done
 done
-netstat -pl | grep -e ":3001" -e ":3003" -e ":3004" -e ":3005"
+# linux only: netstat -pl | grep -e ":3001" -e ":3003" -e ":3004" -e ":3005"
 exit 0

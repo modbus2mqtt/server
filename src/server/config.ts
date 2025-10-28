@@ -9,7 +9,7 @@ import { getBaseFilename } from '../specification.shared'
 import { sign, verify } from 'jsonwebtoken'
 import * as bcrypt from 'bcryptjs'
 import * as http from 'http'
-import { LogLevelEnum, Logger } from '../specification'
+import { LogLevelEnum, Logger, filesUrlPrefix } from '../specification'
 import { ImqttClient, AuthenticationErrors, Iconfiguration, IUserAuthenticationStatus } from '../server.shared'
 import AdmZip from 'adm-zip'
 import { Bus } from './bus'
@@ -42,7 +42,6 @@ const debugAddon = Debug('config.addon')
 const saltRounds = 8
 const defaultTokenExpiryTime = 1000 * 60 * 60 * 24 // One day
 //TODO const defaultTokenExpiryTime = 1000 * 20 // three seconds for testing
-export const filesUrlPrefix = 'specifications/files'
 //const baseTopic = 'modbus2mqtt';
 //const baseTopicHomeAssistant = 'homeassistant';
 export class Config {
@@ -131,11 +130,8 @@ export class Config {
     }
   }
 
-  static getPublicDir(): string {
-    return join(Config.yamlDir, 'public')
-  }
   static getLocalDir(): string {
-    return join(Config.yamlDir, 'local')
+    return join(Config.configDir, 'modbus2mqtt')
   }
 
   //@ts-ignore
@@ -155,7 +151,8 @@ export class Config {
     noAuthentication: false,
   }
 
-  static yamlDir: string = ''
+  static configDir: string = ''
+  static dataDir: string = ''
   static sslDir: string = ''
 
   static getSecret(pathStr: string): string {
@@ -220,7 +217,6 @@ export class Config {
       Config.config.httpport = Config.config.httpport ? Config.config.httpport : 3000
       Config.config.fakeModbus = Config.config.fakeModbus ? Config.config.fakeModbus : false
       Config.config.noAuthentication = Config.config.noAuthentication ? Config.config.noAuthentication : false
-      Config.config.filelocation = Config.config.filelocation ? Config.config.filelocation : Config.yamlDir
       Config.config.tcpBridgePort = Config.config.tcpBridgePort ? Config.config.tcpBridgePort : 502
       process.env.HASSIO_TOKEN && process.env.HASSIO_TOKEN.length ? process.env.HASSIO_TOKEN : undefined
       Config.config.mqttusehassio =
@@ -410,16 +406,15 @@ export class Config {
   readYamlAsync(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       try {
-        debugger
-        if (!Config.yamlDir || Config.yamlDir.length == 0) {
-          log.log(LogLevelEnum.error, 'Yamldir not defined in command line')
+        if (!Config.configDir || Config.configDir.length == 0) {
+          log.log(LogLevelEnum.error, 'configDir not defined in command line')
         }
-        if (!fs.existsSync(Config.yamlDir)) {
-          log.log(LogLevelEnum.notice, 'configuration directory  not found ' + process.cwd() + '/' + Config.yamlDir)
+        if (!fs.existsSync(Config.configDir)) {
+          log.log(LogLevelEnum.notice, 'configuration directory  not found ' + process.cwd() + '/' + Config.configDir)
           Config.config = structuredClone(Config.newConfig)
           resolve()
         }
-        debug('yamlDir: ' + Config.yamlDir + ' ' + process.argv.length)
+        debug('configDir: ' + Config.configDir + ' ' + process.argv.length)
 
         var yamlFile = Config.getConfigPath()
 
@@ -427,7 +422,7 @@ export class Config {
           log.log(LogLevelEnum.notice, 'configuration file  not found ' + yamlFile)
           Config.config = structuredClone(Config.newConfig)
         } else {
-          var secretsFile = Config.yamlDir + '/local/secrets.yaml'
+          var secretsFile = Config.getLocalDir() + '/secrets.yaml'
           var src: string = fs.readFileSync(yamlFile, { encoding: 'utf8' })
           if (fs.existsSync(secretsFile)) {
             var matches: IterableIterator<RegExpMatchArray>
@@ -454,8 +449,7 @@ export class Config {
           Config.config = parse(src)
           if (Config.config.debugComponents && Config.config.debugComponents.length) Debug.enable(Config.config.debugComponents)
 
-          if (Config.yamlDir.length == 0) log.log(LogLevelEnum.error, 'yamlDir not set')
-          else if (Config.config) Config.config.filelocation = Config.yamlDir
+          if (Config.configDir.length == 0) log.log(LogLevelEnum.error, 'configDir not set')
           else {
             log.log(LogLevelEnum.error, 'config file not parsed "' + src + '"')
           }
@@ -519,6 +513,10 @@ export class Config {
       ;(secrets as any)['password'] = cpConfig.password
       cpConfig.password = '!secret password'
     }
+    let nonConfigs:string[]=[ "mqttusehassio", "filelocation"]
+    nonConfigs.forEach( (name:string)=>{
+      delete (cpConfig as any)[name];
+    })
     let filename = Config.getConfigPath()
     let dir = path.dirname(filename)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -528,10 +526,10 @@ export class Config {
     fs.writeFileSync(this.getSecretsPath(), s, { encoding: 'utf8' })
   }
   static getConfigPath() {
-    return Config.yamlDir + '/local/modbus2mqtt.yaml'
+    return Config.getLocalDir() + '/modbus2mqtt.yaml'
   }
   getSecretsPath() {
-    return Config.yamlDir + '/local/secrets.yaml'
+    return Config.getLocalDir() + '/secrets.yaml'
   }
   static setFakeModbus(newMode: boolean) {
     Config.config.fakeModbus = newMode

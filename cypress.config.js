@@ -51,9 +51,11 @@ let onAllProcessesStopped = new EventEmitter()
 
 function startProcesses(args, ports) {
   return new Promise((resolve, reject) => {
+    tmpdirs=[]
     args.forEach((arg) => {
       logStartup('starting ' + arg)
       let child_process = spawn('/bin/sh', arg.split(' '), { detached: true, encoding: 'utf-8' })
+      resetControllers.push(child_process)
       child_process.unref()
       child_process.stdout.on('data', function (data) {
         data
@@ -125,19 +127,15 @@ function waitForPorts(args, ports) {
 }
 function stopServices() {
   return new Promise((resolve, reject) => {
-    exec('cypress/servers/killTestServers', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`)
-        reject()
-        return
-      }
-      console.log('stopServices: success ')
-      tmpdirs = []
-      if (stdout.length) console.log(`stdout: ${stdout}`)
 
-      if (stderr.length) console.error(`stderr: ${stderr}`)
+    var process = resetControllers.pop()
+    while (process != undefined){
+      if(!process.kill('SIGINT')){
+          process.kill('SIGKILL')
+      }
+      process= resetControllers.pop()
+    }
       resolve('OK')
-    })
   })
 }
 
@@ -231,14 +229,6 @@ module.exports = defineConfig({
             else reject(new Error('getTempDir: tmpdir not defined  ' + command))
           })
         },
-        e2eStop() {
-          return new Promise((resolve) => {
-            logStartup('e2eStop')
-            // initControllers.forEach(stopChildProcess)
-            resetControllers.forEach(stopChildProcess)
-            resolve('Stopped')
-          })
-        },
         log(msg) {
           console.log(msg)
           return 'OK'
@@ -248,7 +238,7 @@ module.exports = defineConfig({
   },
     env: {
       logstartup: false, // Set to true to log startup services messages
-      logservers: false,
+      logservers: true,
       nginxAddonHttpPort: 3006, //nginx
       modbus2mqttAddonHttpPort: 3004, //ingress port
       modbusTcpHttpPort: 3002,

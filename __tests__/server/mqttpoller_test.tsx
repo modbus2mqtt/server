@@ -1,33 +1,20 @@
 import { Config } from '../../src/server/config'
 import {
-  IbaseSpecification,
-  Ientity,
   ImodbusEntity,
-  ImodbusSpecification,
-  Ispecification,
   ModbusRegisterType,
-  SpecificationStatus,
-  VariableTargetParameters,
 } from '../../src/specification.shared'
 import { ItopicAndPayloads, MqttDiscover } from '../../src/server/mqttdiscover'
 import {
-  Client,
-  ClientSubscribeCallback,
-  IClientSubscribeOptions,
-  IClientSubscribeProperties,
-  ISubscriptionMap,
   MqttClient,
 } from 'mqtt'
-import { submitGetHoldingRegisterRequest } from '../../src/server/submitRequestMock'
-import { FakeModes, FakeMqtt, initBussesForTest, yamlDir } from './configsbase'
+import { FakeModes, FakeMqtt, initBussesForTest, setConfigsDirsForTest
+ } from './configsbase'
 import { Bus } from '../../src/server/bus'
 import Debug from 'debug'
-import { ConfigSpecification, Logger } from '../../src/specification'
-import { expect, test, afterAll, beforeAll, jest, xtest, beforeEach } from '@jest/globals'
-import exp from 'constants'
+import { ConfigSpecification } from '../../src/specification'
+import { expect, test, beforeAll } from '@jest/globals'
 import { Islave, Slave } from '../../src/server.shared'
 import { ConfigBus } from '../../src/server/configbus'
-import { Modbus } from '../../src/server/modbus'
 import { MqttConnector } from '../../src/server/mqttconnector'
 import { MqttPoller } from '../../src/server/mqttpoller'
 import { MqttSubscriptions } from '../../src/server/mqttsubscriptions'
@@ -123,10 +110,8 @@ function copySubscribedSlaves(toA: Slave[], fromA: Slave[]) {
 }
 beforeAll((done) => {
   // Fix ModbusCache ModbusCache.prototype.submitGetHoldingRegisterRequest = submitGetHoldingRegisterRequest
-  Config['yamlDir'] = yamlDir
+  setConfigsDirsForTest();
   Config['config'] = {} as any
-  Config.sslDir = yamlDir
-  ConfigSpecification.yamlDir = yamlDir
   let readConfig: Config = new Config()
   readConfig.readYamlAsync().then(() => {
     fakeDiscovery = getFakeDiscovery()

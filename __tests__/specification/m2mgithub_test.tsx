@@ -1,6 +1,6 @@
 import Debug from 'debug'
 import { M2mGitHub } from '../../src/specification'
-import { yamlDir } from './configsbase'
+import { configDir, dataDir } from './configsbase'
 import { join } from 'path'
 import { ConfigSpecification } from '../../src/specification'
 import { beforeAll, expect, it, describe, jest } from '@jest/globals'
@@ -17,10 +17,11 @@ declare global {
 }
 
 Debug.enable('m2mgithub')
-ConfigSpecification['yamlDir'] = yamlDir
+ConfigSpecification['configDir'] = configDir
+ConfigSpecification['dataDir'] = dataDir
 ConfigSpecification.setMqttdiscoverylanguage('en', process.env.GITHUB_TOKEN)
 beforeAll(() => {
-  ConfigSpecification['yamlDir'] = yamlDir
+  ConfigSpecification['configDir'] = configDir
   new ConfigSpecification().readYaml()
   M2mGitHub.prototype['createOwnModbus2MqttRepo']
 })
@@ -34,7 +35,7 @@ function testWait(github: M2mGitHub, done: any) {
       .then(() => {
         github
           .commitFiles(
-            yamlDir + '/public',
+            ConfigSpecification.getPublicDir(),
             'waterleveltransmitter',
             [
               'specifications/waterleveltransmitter.yaml',
@@ -65,31 +66,31 @@ function testWait(github: M2mGitHub, done: any) {
   })
 }
 it('checkFiles files.yaml exists, other file is missing=> OK', () => {
-  let root = yamlDir
-  let github = new M2mGitHub(null, root)
+  let localRoot = ConfigSpecification.getLocalDir()
+  let github = new M2mGitHub(null, localRoot)
   let oldFn = M2mGitHub.prototype['uploadFileAndCreateTreeParameter']
   M2mGitHub.prototype['uploadFileAndCreateTreeParameter'] = jest
     .fn<(root: string, filemname: string) => Promise<any>>()
     .mockResolvedValue({})
-  let a = github['checkFiles'](root, [
-    'local/specifications/files/waterleveltransmitter/files.yaml',
-    'local/specifications/files/waterleveltransmitter/test.png',
+  let a = github['checkFiles'](localRoot, [
+    '/specifications/files/waterleveltransmitter/files.yaml',
+    '/specifications/files/waterleveltransmitter/test.png',
   ])
   expect(a.length).toBe(1)
   M2mGitHub.prototype['uploadFileAndCreateTreeParameter'] = oldFn
 })
 
 it('checkFiles files.yaml does not exist => Exception', () => {
-  let root = './__tests__/yaml-dir'
-  let github = new M2mGitHub(null, root)
+   let localRoot = ConfigSpecification.getLocalDir()
+ let github = new M2mGitHub(null, localRoot)
   let oldFn = M2mGitHub.prototype['uploadFileAndCreateTreeParameter']
   M2mGitHub.prototype['uploadFileAndCreateTreeParameter'] = jest
     .fn<(root: string, filemname: string) => Promise<any>>()
     .mockResolvedValue({})
   let t: () => void = () => {
-    github['checkFiles'](root, [
-      'local/specifications/files/notexists/files.yaml',
-      'local/specifications/files/waterleveltransmitter/test.png',
+    github['checkFiles'](localRoot, [
+      '/specifications/files/notexists/files.yaml',
+      '/specifications/files/waterleveltransmitter/test.png',
     ])
   }
   expect(t).toThrowError()
@@ -98,7 +99,7 @@ it('checkFiles files.yaml does not exist => Exception', () => {
 
 describe.skip('skipped because github tests require NODE_AUTH_TOKEN', () => {
   it('init with no github token', (done) => {
-    let publictestdir = join(yamlDir, 'publictest')
+    let publictestdir = join(ConfigSpecification.dataDir, 'publictest')
     let github = new M2mGitHub(null, publictestdir)
     github['ownOwner'] = 'modbus2mqtt'
     github
@@ -114,7 +115,7 @@ describe.skip('skipped because github tests require NODE_AUTH_TOKEN', () => {
   })
 
   it('init', (done) => {
-    let github = new M2mGitHub(process.env.GITHUB_TOKEN, join(yamlDir, 'publictest'))
+    let github = new M2mGitHub(process.env.GITHUB_TOKEN, join(configDir, 'publictest'))
     github['ownOwner'] = 'modbus2mqtt'
     testWait(github, done)
     // github.deleteRepository().then(() => {

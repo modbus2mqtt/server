@@ -12,7 +12,7 @@ import { ConfigSpecification } from '../../src/specification'
 import { ImodbusValues, M2mSpecification, emptyModbusValues } from '../../src/specification'
 import { Converters, IdentifiedStates } from '../../src/specification.shared'
 import * as fs from 'fs'
-import { singleMutex, yamlDir } from './configsbase'
+import { singleMutex, configDir } from './configsbase'
 import { Mutex } from 'async-mutex'
 import { IfileSpecification } from '../../src/specification'
 import { it, expect, beforeAll, describe, afterAll } from '@jest/globals'
@@ -25,7 +25,7 @@ declare global {
   }
 }
 ConfigSpecification.setMqttdiscoverylanguage('en', process.env.GITHUB_TOKEN)
-ConfigSpecification['yamlDir'] = yamlDir
+ConfigSpecification['configDir'] = configDir
 
 beforeAll(() => {
   new ConfigSpecification().readYaml()
@@ -173,12 +173,11 @@ describe('simple tests', () => {
 
 it.skip('closeContribution need github access', (done) => {
   singleMutex.acquire()
-  let yamlDir = '__tests__/yamlDircloseContribute'
 
   ConfigSpecification.setMqttdiscoverylanguage('en', process.env.GITHUB_TOKEN)
-  ConfigSpecification['yamlDir'] = '__tests__/yamlDircloseContribute'
-  fs.rmSync(yamlDir, { recursive: true, force: true })
-  fs.mkdirSync(yamlDir)
+  ConfigSpecification['configDir'] = configDir
+  fs.rmSync(configDir, { recursive: true, force: true })
+  fs.mkdirSync(configDir)
   let tspec = structuredClone(spec)
   ConfigSpecification['specifications'].push(tspec)
 
@@ -188,11 +187,11 @@ it.skip('closeContribution need github access', (done) => {
   M2mSpecification.closeContribution(tspec)
     .then(() => {
       done()
-      fs.rmSync(yamlDir, { recursive: true, force: true })
+      fs.rmSync(configDir, { recursive: true, force: true })
       singleMutex.release()
     })
     .catch((e) => {
-      fs.rmSync(yamlDir, { recursive: true, force: true })
+      fs.rmSync(configDir, { recursive: true, force: true })
       console.log('error' + e.message)
       expect(1).toBeFalsy()
     })
