@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Format nur die übergebenen Dateien und zeige nur geänderte an
+# Format only the given files and show only changed ones
 if [ "$#" -eq 0 ]; then
-	set -- **/*.{ts,js,css,html,tsx}
+  	echo "[prettier-changed]INFO No files to format." >&2
+  	exit 0
 fi
-echo "Running prettier on files: $*" >&2
+# echo "[prettier-changed]INFO Running prettier on files: $*" >&2
 prettier --write "$@" 2>&1 | grep -E 'modified|formatted' || true

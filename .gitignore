@@ -153,3 +153,4 @@ alpine/repo/
 alpine-package/
 alpine-repo/
 distprod
+cypress/servers/__pycache__/

@@ -1,0 +1,7 @@
+mqttconnect:
+  mqttserverurl: mqtt://localhost:3001
+  username: homeassistant
+  password: homeassistant
+  clientId: modbus2mqtt
+  clean: true
+  connectTimeout: 1000

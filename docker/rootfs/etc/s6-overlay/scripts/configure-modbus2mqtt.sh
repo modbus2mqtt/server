@@ -21,3 +21,4 @@ chown -R modbus2mqtt:dialout /config/modbus2mqtt
 chown -R modbus2mqtt:dialout /data/public
 touch /ssl/secrets.txt
 chown -R modbus2mqtt:dialout /ssl/secrets.txt
+git config --global --add safe.directory /data/public

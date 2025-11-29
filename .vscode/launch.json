@@ -49,7 +49,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["restartServers","--permanent"],
+      "args": ["restartServers"],
       "cwd": "${workspaceFolder}"
     },
 

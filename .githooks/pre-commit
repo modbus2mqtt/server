@@ -104,5 +104,36 @@ else
   echo "[pre-commit] No files to format." >&2
 fi
 
+# Block commits with forbidden file extensions for ESM projects
+forbidden_exts="cjs cts js ts tsx"
+for file in $STAGED_FILES; do
+  ext="${file##*.}"
+  for forbidden in $forbidden_exts; do
+    if [ "$ext" = "$forbidden" ]; then
+      echo "[pre-commit] ERROR: File extension .$forbidden is not allowed in this ESM project: $file" >&2
+      echo "[pre-commit] Commit aborted due to forbidden file extension." >&2
+      exit 1
+    fi
+  done
+done
+
+# Check for non-English text in staged files (only code/text files)
+NON_ENGLISH_FOUND=0
+for file in $STAGED_FILES; do
+  case "$file" in
+    *.mjs|*.mts|*.sh|*.md|*.html|*.css|*.json|*.yml|*.yaml)
+      # Check for non-ASCII and non-standard English chars (allow common code symbols)
+      if LC_ALL=C grep -P '[^\x00-\x7F]' "$file" >/dev/null; then
+        echo "[pre-commit] ERROR: Non-English (non-ASCII) text found in $file. Please use only English in code and documentation." >&2
+        NON_ENGLISH_FOUND=1
+      fi
+      ;;
+  esac
+done
+if [ "$NON_ENGLISH_FOUND" -eq 1 ]; then
+  echo "[pre-commit] Commit aborted due to non-English text." >&2
+  exit 1
+fi
+
 echo "[pre-commit] All checks passed." >&2
 exit 0

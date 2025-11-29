@@ -1,8 +1,8 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import prettier from 'eslint-config-prettier';
-import jest from 'eslint-plugin-jest';
-import prettierPlugin from 'eslint-plugin-prettier';
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import prettier from 'eslint-config-prettier'
+import jest from 'eslint-plugin-jest'
+import prettierPlugin from 'eslint-plugin-prettier'
 
 export default [
   js.configs.recommended,
@@ -45,9 +45,6 @@ export default [
     },
   },
   {
-    files: ['*.js', '*.mjs'],
-    languageOptions: {
-      parser: null // oder: parser: require.resolve('espree')
-    }
-  }
-];
+    ignores: ['*.js', '*.mjs'],
+  },
+]
