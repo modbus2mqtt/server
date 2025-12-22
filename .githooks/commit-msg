@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 # Commit-msg hook to enforce package.json and APKBUILD rules
 # Usage: install by running: git config core.hooksPath scripts/git-hooks

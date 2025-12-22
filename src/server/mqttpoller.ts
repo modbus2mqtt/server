@@ -1,10 +1,10 @@
-import { Slave, PollModes, ModbusTasks, Islave } from '../server.shared'
+import { Slave, PollModes, ModbusTasks } from '../server.shared'
 import Debug from 'debug'
 import { LogLevelEnum, Logger } from '../specification'
 import { Bus } from './bus'
 import { Config } from './config'
 import { Modbus } from './modbus'
-import { ItopicAndPayloads, MqttDiscover } from './mqttdiscover'
+import { ItopicAndPayloads } from './mqttdiscover'
 import { MqttConnector } from './mqttconnector'
 
 const debug = Debug('mqttpoller')
@@ -24,17 +24,17 @@ export class MqttPoller {
   // poll gets triggered every 0.1 second
   // Depending on the pollinterval of the slaves it triggers publication of the current state of the slave
   private poll(bus: Bus): Promise<void> {
-    return new Promise<void>((resolve, error) => {
-      let needPolls: Slave[] = []
+    return new Promise<void>((resolve) => {
+      const needPolls: Slave[] = []
 
       bus.getSlaves().forEach((slave) => {
         if (slave.pollMode != undefined && ![PollModes.noPoll, PollModes.trigger].includes(slave.pollMode)) {
-          let sl = new Slave(bus.getId(), slave, Config.getConfiguration().mqttbasetopic)
+          const sl = new Slave(bus.getId(), slave, Config.getConfiguration().mqttbasetopic)
           let pc: IslavePollInfo | undefined = this.slavePollInfo.get(sl.getSlaveId())
           if (pc == undefined) pc = { count: 0, processing: false }
-          if (pc.count > (slave.pollInterval != undefined ? slave.pollInterval / 100 : defaultPollCount)) pc.count = 0
+          if (pc.count >= (slave.pollInterval != undefined ? slave.pollInterval / 100 : defaultPollCount)) pc.count = 0
           if (pc.count == 0 && !pc.processing) {
-            let s = new Slave(bus.getId(), slave, Config.getConfiguration().mqttbasetopic)
+            const s = new Slave(bus.getId(), slave, Config.getConfiguration().mqttbasetopic)
             if (slave.specification) {
               pc.processing = true
               needPolls.push(s)
@@ -50,36 +50,63 @@ export class MqttPoller {
         }
       })
       if (needPolls.length > 0) {
-        let tAndP: ItopicAndPayloads[] = []
+        const tAndP: ItopicAndPayloads[] = []
         let pollDeviceCount = 0
+        let devicesToPoll = 0
         needPolls.forEach((bs) => {
           // Trigger state only if it's configured to do so
-          let spMode = bs.getPollMode()
+          const spMode = bs.getPollMode()
           if (spMode == undefined || [PollModes.intervall, PollModes.intervallAndTrigger].includes(spMode)) {
             if (bus) {
-              let slave = bus.getSlaveBySlaveId(bs.getSlaveId())!
+              devicesToPoll++
+              const slave = bus.getSlaveBySlaveId(bs.getSlaveId())!
               Modbus.getModbusSpecification(ModbusTasks.poll, bus.getModbusAPI(), slave, bs.getSpecificationId(), (e) => {
                 log.log(LogLevelEnum.error, 'reading spec failed' + e.message)
-              }).subscribe((spec) => {
-                tAndP.push({ topic: bs.getStateTopic(), payload: bs.getStatePayload(spec.entities), entityid: 0 })
-                tAndP.push({ topic: bs.getAvailabilityTopic(), payload: 'online', entityid: 0 })
+                const si = this.slavePollInfo.get(bs.getSlaveId())
+                if (si) this.slavePollInfo.set(bs.getSlaveId(), { count: si.count, processing: false })
                 pollDeviceCount++
-                if (pollDeviceCount == needPolls.length)
-                  this.connector.getMqttClient((mqttClient) => {
-                    debug('poll: publishing')
-                    tAndP.forEach((tAndP) => {
-                      mqttClient.publish(tAndP.topic, tAndP.payload)
+                if (pollDeviceCount == devicesToPoll) {
+                  resolve()
+                }
+              }).subscribe({
+                next: (spec) => {
+                  tAndP.push({ topic: bs.getStateTopic(), payload: bs.getStatePayload(spec.entities), entityid: 0 })
+                  tAndP.push({ topic: bs.getAvailabilityTopic(), payload: 'online', entityid: 0 })
+                  // Reset processing flag immediately for this device
+                  const si = this.slavePollInfo.get(bs.getSlaveId())
+                  if (si) this.slavePollInfo.set(bs.getSlaveId(), { count: si.count, processing: false })
+                  pollDeviceCount++
+                  if (pollDeviceCount == devicesToPoll) {
+                    this.connector.getMqttClient((mqttClient) => {
+                      debug('poll: publishing')
+                      tAndP.forEach((tAndP) => {
+                        mqttClient.publish(tAndP.topic, tAndP.payload)
+                      })
+                      resolve()
                     })
-                    needPolls.forEach((v) => {
-                      let si = this.slavePollInfo.get(v.getSlaveId())
-                      if (si) si.processing = false
-                    })
+                  }
+                },
+                error: (err) => {
+                  log.log(LogLevelEnum.error, 'subscribe error: ' + err.message)
+                  const si = this.slavePollInfo.get(bs.getSlaveId())
+                  if (si) this.slavePollInfo.set(bs.getSlaveId(), { count: si.count, processing: false })
+                  pollDeviceCount++
+                  if (pollDeviceCount == devicesToPoll) {
                     resolve()
-                  })
+                  }
+                },
               })
             }
+          } else {
+            // Device doesn't match poll mode, reset processing flag
+            const si = this.slavePollInfo.get(bs.getSlaveId())
+            if (si) this.slavePollInfo.set(bs.getSlaveId(), { count: si.count, processing: false })
           }
         })
+        // If no devices actually need polling after mode check, resolve immediately
+        if (devicesToPoll == 0) {
+          resolve()
+        }
       } else resolve()
     })
   }
@@ -93,8 +120,8 @@ export class MqttPoller {
       }, 100)
     }
   }
-  private error(msg: any): void {
-    let message = "MQTT: Can't connect to " + Config.getConfiguration().mqttconnect.mqttserverurl + ' ' + msg.toString()
+  private error(msg: Error | string): void {
+    const message = "MQTT: Can't connect to " + Config.getConfiguration().mqttconnect.mqttserverurl + ' ' + msg.toString()
     if (message !== this.lastMessage) log.log(LogLevelEnum.error, message)
     this.lastMessage = message
   }

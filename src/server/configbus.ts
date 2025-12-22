@@ -54,7 +54,7 @@ export class ConfigBus {
       busDirs.forEach((de) => {
         if (de.isDirectory() && de.name.startsWith('bus.')) {
           const busid = Number.parseInt(de.name.substring(4))
-          const busYaml = join(de.path, de.name, 'bus.yaml')
+          const busYaml = join(busDir, de.name, 'bus.yaml')
           let connectionData: IModbusConnection
           if (fs.existsSync(busYaml)) {
             const src: string = fs.readFileSync(busYaml, {
