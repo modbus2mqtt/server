@@ -12,7 +12,7 @@
   "bugs": "https://github.com/modbus2mqtt/server/issues",
   "type": "commonjs",
   "bin": {
-    "modbus2mqtt": "bin/modbus2mqtt.js"
+    "modbus2mqtt": "bin/modbus2mqtt"
   },
   "author": "Volkmar Nissen <volkmar.nissen@gmail.com>",
   "license": "MIT",
