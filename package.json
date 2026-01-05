@@ -1,6 +1,6 @@
 {
   "name": "modbus2mqtt",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "sshserver": "homeassistant@homeassistant.lan",
   "homepage": "https://github.com/modbus2mqtt/server/README.md",
   "description": "server for modbus2mqtt for REST API of configuration and publishing modbus values to mqtt",
